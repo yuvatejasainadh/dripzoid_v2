@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/providers/session_provider.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 
 class AuthGuard extends ConsumerWidget {
   final Widget child;
@@ -13,9 +13,9 @@ class AuthGuard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(sessionProvider);
+    final auth = ref.watch(authProvider);
 
-    if (!session.initialized) {
+    if (auth.status == AuthStatus.initial) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -23,7 +23,7 @@ class AuthGuard extends ConsumerWidget {
       );
     }
 
-    if (!session.authenticated) {
+    if (auth.status != AuthStatus.authenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushNamedAndRemoveUntil(
           context,

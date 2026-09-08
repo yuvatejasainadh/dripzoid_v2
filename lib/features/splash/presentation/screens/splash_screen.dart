@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/services/app_initializer.dart';
-import '../../../auth/providers/session_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_logo.dart';
 
@@ -52,18 +53,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _initialize() async {
-    await AppInitializer.initialize();
-
-    await ref.read(sessionProvider.notifier).initialize();
-
-    if (!mounted) return;
-
-    final session = ref.read(sessionProvider);
-
-    if (session.authenticated) {
-      context.go('/home');
-    } else {
-      context.go('/login');
+    try {
+      await AppInitializer.initialize();
+      // Add a reasonable timeout for session check
+      await ref.read(authProvider.notifier).checkSession().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          // If it times out, we force unauthenticated status to move forward
+          // In a real app, you might want to show a retry button or offline message
+        },
+      );
+    } catch (e, stack) {
+      AppLogger.e('[SplashScreen] [initialize] Critical failure during startup', error: e, stackTrace: stack);
+    } finally {
+      // Fallback: If for any reason the router doesn't move us, 
+      // check the status and move manually as a secondary trigger
+      if (mounted) {
+        final auth = ref.read(authProvider);
+        if (auth.status == AuthStatus.authenticated) {
+          context.go('/home');
+        } else if (auth.status == AuthStatus.unauthenticated) {
+          context.go('/login');
+        }
+      }
     }
   }
 
@@ -110,7 +122,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               Text(
                                 "Wear The Confidence",
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: Colors.grey.shade600,
                                   letterSpacing: .5,
                                 ),
                               ),
@@ -133,9 +144,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       const SizedBox(height: 18),
                       Text(
                         "Initializing...",
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
+                        style: textTheme.bodyMedium,
                       ),
                     ],
                   ),

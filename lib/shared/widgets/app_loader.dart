@@ -140,7 +140,7 @@ class _AppLoaderState extends State<AppLoader>
 
   @override
   Widget build(BuildContext context) {
-    const color = Colors.black;
+    final color = Theme.of(context).colorScheme.primary;
 
     return SizedBox(
       width: 44,
@@ -161,7 +161,7 @@ class _AppLoaderState extends State<AppLoader>
                 child: Container(
                   width: _dotSize,
                   height: _dotSize,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
                   ),

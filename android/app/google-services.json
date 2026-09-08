@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "83358271931",
+    "project_id": "dripzoid-e9a1f",
+    "storage_bucket": "dripzoid-e9a1f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:83358271931:android:5df501fd0ffb482b061c9e",
+        "android_client_info": {
+          "package_name": "com.aistudio.dripzoid.fshn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "83358271931-aotmn14v169qs9i1u716v925uj9pmis5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.dripzoid.fshn",
+            "certificate_hash": "938188dda39b057034dad880468262815b639e45"
+          }
+        },
+        {
+          "client_id": "83358271931-jt696gs2pb1bqssq2fer32n2ou7gjaoi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADyP8I_Vr6ix-gerk7aRPh-4Y5UEbHYCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "83358271931-jt696gs2pb1bqssq2fer32n2ou7gjaoi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

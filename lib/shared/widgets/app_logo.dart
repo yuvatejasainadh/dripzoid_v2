@@ -16,14 +16,11 @@ class AppLogo extends StatelessWidget {
         ? 'assets/logos/dripzoid_icon_dark.png'
         : 'assets/logos/dripzoid_icon_light.png';
 
-    return Hero(
-      tag: 'app-logo',
-      child: Image.asset(
-        asset,
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-      ),
+    return Image.asset(
+      asset,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
     );
   }
 }
