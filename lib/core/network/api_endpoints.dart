@@ -1,7 +1,7 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const String baseUrl = "https://api.dripzoid.com";
+  static const String baseUrl = "https://drz.yuvatejasainadh.me";
 
   // Authentication
   static const String login = "/api/auth/login";
@@ -28,6 +28,7 @@ class ApiEndpoints {
   static const String featuredProducts = "/api/featured";
   static const String trendingProducts = "/api/trending";
   static const String products = "/api/products";
+  static const String searchProducts = "/api/products/search";
 
   // Cart
   static const String cart = "/api/cart";

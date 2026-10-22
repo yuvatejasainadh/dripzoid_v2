@@ -29,6 +29,16 @@ class RazorpayService {
     required String email,
     required String contact,
   }) {
+    if (apiKey.isEmpty) {
+      AppLogger.e('[RazorpayService] [openCheckout] Payment failed: apiKey is empty');
+      onError?.call(PaymentFailureResponse(
+        Razorpay.INVALID_OPTIONS,
+        'Payment gateway configuration is missing. Please configure RAZORPAY_KEY.',
+        null,
+      ));
+      return;
+    }
+
     var options = {
       'key': apiKey,
       'amount': (amount * 100).toInt(),

@@ -349,7 +349,7 @@ class _HorizontalCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      height: 140,
+      constraints: const BoxConstraints(minHeight: 140),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: AppShapes.radius16,
@@ -358,57 +358,60 @@ class _HorizontalCard extends StatelessWidget {
           color: colorScheme.outline.withValues(alpha: 0.08),
         ),
       ),
-      child: Row(
-        children: [
-          // Image
-          Stack(
-            children: [
-              AspectRatio(
-                aspectRatio: 1,
-                child: Hero(
-                  tag: 'product_horizontal_${product.id}${heroSuffix.isNotEmpty ? '_$heroSuffix' : ''}',
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
-                    child: product.images.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: product.images.first,
-                            fit: BoxFit.cover,
-                            fadeInDuration: const Duration(milliseconds: 300),
-                            placeholder: (context, url) => const ShimmerWidget(),
-                          )
-                        : Center(child: Icon(Icons.image_outlined, color: colorScheme.outline)),
-                  ),
-                ),
-              ),
-              if (showDiscount && product.hasDiscount)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      borderRadius: AppShapes.radius8,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image
+            SizedBox(
+              width: 120,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Hero(
+                    tag: 'product_horizontal_${product.id}${heroSuffix.isNotEmpty ? '_$heroSuffix' : ''}',
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
+                      child: product.images.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: product.images.first,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 300),
+                              placeholder: (context, url) => const ShimmerWidget(),
+                            )
+                          : Center(child: Icon(Icons.image_outlined, color: colorScheme.outline)),
                     ),
-                    child: Text(
-                      '${product.discountPercentage.round()}%',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 9,
+                  ),
+                  if (showDiscount && product.hasDiscount)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          borderRadius: AppShapes.radius8,
+                        ),
+                        child: Text(
+                          '${product.discountPercentage.round()}%',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 9,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-            ],
-          ),
+                ],
+              ),
+            ),
           // Content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     product.name,
@@ -425,7 +428,7 @@ class _HorizontalCard extends StatelessWidget {
                       color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -470,7 +473,8 @@ class _HorizontalCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 

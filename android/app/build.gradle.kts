@@ -1,9 +1,20 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
 
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use { stream ->
+        keystoreProperties.load(stream)
+    }
+}
 
 android {
     namespace = "com.aistudio.dripzoid.fshn"
@@ -26,11 +37,46 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val keyAliasVal = keystoreProperties.getProperty("keyAlias") ?: System.getenv("ANDROID_KEY_ALIAS")
+            val keyPasswordVal = keystoreProperties.getProperty("keyPassword") ?: System.getenv("ANDROID_KEY_PASSWORD")
+            val storeFileVal = keystoreProperties.getProperty("storeFile") ?: System.getenv("ANDROID_STORE_FILE")
+            val storePasswordVal = keystoreProperties.getProperty("storePassword") ?: System.getenv("ANDROID_STORE_PASSWORD")
+
+            if (!storeFileVal.isNullOrEmpty() &&
+                !keyAliasVal.isNullOrEmpty() &&
+                !keyPasswordVal.isNullOrEmpty() &&
+                !storePasswordVal.isNullOrEmpty()
+            ) {
+                val candidateFile = file(storeFileVal)
+                val resolvedFile = if (candidateFile.exists()) candidateFile else rootProject.file(storeFileVal)
+                if (resolvedFile.exists()) {
+                    keyAlias = keyAliasVal
+                    keyPassword = keyPasswordVal
+                    storeFile = resolvedFile
+                    storePassword = storePasswordVal
+                } else {
+                    logger.warn("Release keystore file specified but not found at: ${resolvedFile.absolutePath}")
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            val releaseSigning = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigning.storeFile != null) {
+                releaseSigning
+            } else {
+                null
+            }
         }
     }
 }

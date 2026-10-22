@@ -48,6 +48,8 @@ final wishlistProvider = NotifierProvider<WishlistNotifier, WishlistState>(() {
 });
 
 class WishlistNotifier extends Notifier<WishlistState> {
+  final Set<String> _pendingProductIds = {};
+
   @override
   WishlistState build() {
     return const WishlistState();
@@ -55,37 +57,52 @@ class WishlistNotifier extends Notifier<WishlistState> {
 
   WishlistRepository get _repository => ref.read(wishlistRepositoryProvider);
 
+  void reset() {
+    _pendingProductIds.clear();
+    state = const WishlistState();
+  }
+
   Future<void> fetchWishlist() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     final result = await _repository.getWishlist();
 
     state = switch (result) {
-      Success(data: final List<WishlistItemModel> items) => state.copyWith(items: items, isLoading: false),
-      Failure(message: final String msg) => state.copyWith(errorMessage: msg, isLoading: false),
+      Success(data: final List<WishlistItemModel> items) =>
+        state.copyWith(items: items, isLoading: false, errorMessage: null),
+      Failure(message: final String msg) =>
+        state.copyWith(errorMessage: msg, isLoading: false),
     };
   }
 
   Future<void> toggleWishlist(String productId) async {
-    final isCurrentlyWishlisted = state.isWishlisted(productId);
-    final previousItems = state.items;
+    if (_pendingProductIds.contains(productId)) return;
+    _pendingProductIds.add(productId);
 
-    if (isCurrentlyWishlisted) {
-      // Optimistic Remove
-      state = state.copyWith(
-        items: state.items.where((item) => item.productId != productId).toList(),
-      );
+    try {
+      final isCurrentlyWishlisted = state.isWishlisted(productId);
+      final previousItems = state.items;
 
-      final result = await _repository.removeFromWishlist(productId);
-      if (result is Failure) {
-        state = state.copyWith(items: previousItems, errorMessage: result.message);
-      }
-    } else {
-      final result = await _repository.addToWishlist(productId);
-      if (result is Success) {
-        await fetchWishlist();
+      if (isCurrentlyWishlisted) {
+        // Optimistic Remove
+        state = state.copyWith(
+          items: state.items.where((item) => item.productId != productId).toList(),
+          errorMessage: null,
+        );
+
+        final result = await _repository.removeFromWishlist(productId);
+        if (result is Failure) {
+          state = state.copyWith(items: previousItems, errorMessage: result.message);
+        }
       } else {
-        state = state.copyWith(errorMessage: (result as Failure).message);
+        final result = await _repository.addToWishlist(productId);
+        if (result is Success) {
+          await fetchWishlist();
+        } else {
+          state = state.copyWith(errorMessage: (result as Failure).message);
+        }
       }
+    } finally {
+      _pendingProductIds.remove(productId);
     }
   }
 

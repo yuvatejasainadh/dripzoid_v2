@@ -9,13 +9,29 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import 'conversations_notifier.dart';
 
 class AskDripNotifier extends FamilyAsyncNotifier<List<MessageModel>, String?> {
+  String? _resolvedConversationId;
+
+  String? get conversationId => _resolvedConversationId ?? arg;
+
   @override
   FutureOr<List<MessageModel>> build(String? arg) {
+    _resolvedConversationId = arg;
     if (arg == null) {
       AppLogger.d('[AskDripNotifier] No conversation ID, starting fresh');
       return [];
     }
     return loadMessages(arg);
+  }
+
+  void resetFreshChat() {
+    _resolvedConversationId = null;
+    state = const AsyncValue.data([]);
+  }
+
+  void clearError() {
+    if (state.hasError && state.hasValue) {
+      state = AsyncValue.data(state.value!);
+    }
   }
 
   Future<List<MessageModel>> loadMessages(String id) async {
@@ -33,57 +49,64 @@ class AskDripNotifier extends FamilyAsyncNotifier<List<MessageModel>, String?> {
   }
 
   Future<void> sendMessage(String prompt, {String mode = 'chat'}) async {
-    String? currentId = arg;
+    final trimmedPrompt = prompt.trim();
+    if (trimmedPrompt.isEmpty) return;
+
+    if (state.isLoading) {
+      AppLogger.w('[AskDripNotifier] [sendMessage] Request already in flight, ignoring duplicate');
+      return;
+    }
+
+    String? currentId = _resolvedConversationId ?? arg;
     final repository = ref.read(askDripRepositoryProvider);
-    AppLogger.i('[AskDripNotifier] [sendMessage] Starting flow for prompt: $prompt');
+    AppLogger.i('[AskDripNotifier] [sendMessage] Starting flow for prompt: $trimmedPrompt, currentId: $currentId');
+
+    // 1. Optimistically add the user message and set to loading synchronously
+    final userMessage = MessageModel(
+      id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+      conversationId: currentId ?? '',
+      role: 'user',
+      content: trimmedPrompt,
+      createdAt: DateTime.now(),
+    );
+
+    final previousMessages = state.valueOrNull ?? [];
+    state = AsyncValue.data([...previousMessages, userMessage]);
+    state = const AsyncLoading<List<MessageModel>>().copyWithPrevious(state);
+    AppLogger.d('[AskDripNotifier] [sendMessage] User message added optimistically and loading state set');
 
     try {
-      // 1. If conversationId is null, automatically create a new conversation first
+      // 2. If conversationId is null, automatically create a new conversation first
       if (currentId == null) {
         AppLogger.d('[AskDripNotifier] [sendMessage] Creating new conversation...');
-        final convResult = await repository.createConversation(prompt);
+        final convResult = await repository.createConversation(trimmedPrompt);
         switch (convResult) {
           case Success(data: final data):
             currentId = data.id;
+            _resolvedConversationId = data.id;
             AppLogger.i('[AskDripNotifier] [sendMessage] New conversation: $currentId');
             // Refresh conversations list to include the new one
             ref.read(conversationsNotifierProvider.notifier).loadConversations();
-          case Failure(message: final m, endpoint: final ep, statusCode: final sc):
+          case Failure(message: final m, endpoint: final ep, statusCode: final sc, stackTrace: final st):
             final errorMsg = kDebugMode ? 'Failed to create chat: $m\nEndpoint: $ep\nCode: $sc' : 'Unable to start chat. Please try again.';
             AppLogger.e('[AskDripNotifier] [sendMessage] Chat creation failed: $m');
-            state = AsyncValue.error(errorMsg, StackTrace.current);
+            state = AsyncError<List<MessageModel>>(errorMsg, st ?? StackTrace.current).copyWithPrevious(state);
             return;
         }
       }
-
-      // 2. Optimistically add the user message to the list
-      final userMessage = MessageModel(
-        id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
-        conversationId: currentId,
-        role: 'user',
-        content: prompt,
-        createdAt: DateTime.now(),
-      );
-
-      final previousMessages = state.valueOrNull ?? [];
-      state = AsyncValue.data([...previousMessages, userMessage]);
-      AppLogger.d('[AskDripNotifier] [sendMessage] User message added optimistically');
-
-      // Set to loading while keeping the data (including the new user message)
-      state = const AsyncLoading<List<MessageModel>>().copyWithPrevious(state);
 
       // 3. Call the repository's sendPrompt
       final userId = ref.read(authProvider).user?.id;
       if (userId == null) {
         AppLogger.w('[AskDripNotifier] [sendMessage] User ID missing');
-        state = AsyncValue.error('User not authenticated. Please log in.', StackTrace.current);
+        state = AsyncError<List<MessageModel>>('User not authenticated. Please log in.', StackTrace.current).copyWithPrevious(state);
         return;
       }
 
       AppLogger.d('[AskDripNotifier] [sendMessage] Calling AI engine...');
       final result = await repository.sendPrompt(
         userId: userId,
-        prompt: prompt,
+        prompt: trimmedPrompt,
         conversationId: currentId,
         mode: mode,
       );
@@ -98,11 +121,11 @@ class AskDripNotifier extends FamilyAsyncNotifier<List<MessageModel>, String?> {
               ? 'AI Error: $m\nEndpoint: $ep\nStatus: $sc' 
               : 'Dripzoid AI is unavailable. Please try again later.';
           AppLogger.e('[AskDripNotifier] [sendMessage] Pipeline failure: $m');
-          state = AsyncValue.error(errorMsg, st ?? StackTrace.current);
+          state = AsyncError<List<MessageModel>>(errorMsg, st ?? StackTrace.current).copyWithPrevious(state);
       }
     } catch (e, stack) {
       AppLogger.f('[AskDripNotifier] [sendMessage] Critical crash', error: e, stackTrace: stack);
-      state = AsyncValue.error(kDebugMode ? 'Crash: ${e.toString()}' : 'Something went wrong.', stack);
+      state = AsyncError<List<MessageModel>>(kDebugMode ? 'Crash: ${e.toString()}' : 'Something went wrong.', stack).copyWithPrevious(state);
     }
   }
 }

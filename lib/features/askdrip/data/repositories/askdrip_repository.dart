@@ -4,6 +4,7 @@ import '../../../../core/models/result.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../services/askdrip_service.dart';
+import '../../../products/data/models/product_model.dart';
 
 class AskDripRepository {
   final AskDripService _service;
@@ -101,10 +102,13 @@ class AskDripRepository {
             if (data is Map) {
               final nestedData = data['data'];
               if (nestedData is Map) {
-                // Try to find DB message, fallback to the data object itself (which has 'response')
-                messageData = nestedData['message'] ?? nestedData;
-              } else {
+                messageData = nestedData['message'] is Map
+                    ? nestedData['message']
+                    : nestedData;
+              } else if (data['message'] is Map) {
                 messageData = data['message'];
+              } else if (data['response'] != null || data['content'] != null) {
+                messageData = Map<String, dynamic>.from(data);
               }
             }
 
@@ -120,13 +124,27 @@ class AskDripRepository {
             // Self-Healing Mapping:
             // If backend didn't return the structured DB message, synthesize one
             final Map<String, dynamic> rawMsg = Map<String, dynamic>.from(messageData);
+
+            final rawProducts = rawMsg['products'] is List ? (rawMsg['products'] as List) : [];
+            final safeProducts = <Map<String, dynamic>>[];
+            for (final p in rawProducts) {
+              if (p is Map) {
+                try {
+                  final pMap = p is Map<String, dynamic> ? p : Map<String, dynamic>.from(p);
+                  ProductModel.fromJson(pMap);
+                  safeProducts.add(pMap);
+                } catch (e) {
+                  AppLogger.w('[AskDripRepository] Skipping invalid AI product item: $p');
+                }
+              }
+            }
             
             final processedMsg = {
               'id': rawMsg['id'] ?? 'temp-assistant-${DateTime.now().millisecondsSinceEpoch}',
               'conversationId': rawMsg['conversationId'] ?? conversationId ?? '',
               'role': rawMsg['role'] ?? 'assistant',
               'content': rawMsg['content'] ?? rawMsg['response'] ?? '',
-              'products': rawMsg['products'] ?? [],
+              'products': safeProducts,
               'createdAt': rawMsg['createdAt'] ?? DateTime.now().toIso8601String(),
             };
             

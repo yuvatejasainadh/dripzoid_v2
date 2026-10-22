@@ -25,8 +25,11 @@ class HomeService {
   
   Future<Result<dynamic>> searchProducts(String query) async {
     return await _client.get(
-      ApiEndpoints.products,
-      queryParameters: {'search': query},
+      ApiEndpoints.searchProducts,
+      queryParameters: {
+        'q': query,
+        'search': query,
+      },
     );
   }
 }

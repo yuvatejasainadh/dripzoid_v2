@@ -18,7 +18,7 @@ class OrderItemTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,14 +37,14 @@ class OrderItemTile extends StatelessWidget {
                     ),
                     errorWidget: (context, url, error) => Container(
                       color: colorScheme.surfaceContainerHighest,
-                      child: const Icon(Icons.broken_image_outlined),
+                      child: Icon(Icons.broken_image_outlined, color: colorScheme.onSurfaceVariant),
                     ),
                   )
                 : Container(
                     width: 80,
                     height: 80,
                     color: colorScheme.surfaceContainerHighest,
-                    child: const Icon(Icons.image_outlined),
+                    child: Icon(Icons.image_outlined, color: colorScheme.onSurfaceVariant),
                   ),
           ),
           const SizedBox(width: 16),
@@ -60,10 +60,11 @@ class OrderItemTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     _buildOption(context, 'Size', item.selectedSize),
-                    const SizedBox(width: 12),
                     _buildOption(context, 'Color', item.selectedColor),
                   ],
                 ),
@@ -73,13 +74,23 @@ class OrderItemTile extends StatelessWidget {
                   children: [
                     Text(
                       'Qty: ${item.quantity}',
-                      style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                    Text(
-                      '₹${item.price?.round() ?? (item.unitPrice * item.quantity).round()}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.primary,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '₹${item.price?.round() ?? (item.unitPrice * item.quantity).round()}',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: colorScheme.primary,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -103,7 +114,10 @@ class OrderItemTile extends StatelessWidget {
       ),
       child: Text(
         '$label: $value',
-        style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontSize: 10,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }

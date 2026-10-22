@@ -48,10 +48,20 @@ class AppTextTheme {
       color: AppColors.lightTextSecondary,
       height: 1.5,
     ),
+    bodySmall: TextStyle(
+      fontSize: 12,
+      color: AppColors.lightTextSecondary,
+      height: 1.4,
+    ),
     labelLarge: TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w600,
       color: AppColors.lightTextPrimary,
+    ),
+    labelMedium: TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: AppColors.lightTextSecondary,
     ),
     labelSmall: TextStyle(
       fontSize: 11,
@@ -103,10 +113,20 @@ class AppTextTheme {
       color: AppColors.darkTextSecondary,
       height: 1.5,
     ),
+    bodySmall: TextStyle(
+      fontSize: 12,
+      color: AppColors.darkTextSecondary,
+      height: 1.4,
+    ),
     labelLarge: TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w600,
       color: AppColors.darkTextPrimary,
+    ),
+    labelMedium: TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: AppColors.darkTextSecondary,
     ),
     labelSmall: TextStyle(
       fontSize: 11,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../providers/address_notifier.dart';
 import '../../data/models/address_model.dart';
@@ -16,36 +17,50 @@ class AddressListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Saved Addresses'),
       ),
-      body: addressState.when(
-        data: (addresses) => addresses.isEmpty
-            ? _buildEmptyState(context)
-            : ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: addresses.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final address = addresses[index];
-                  return _AddressCard(address: address);
-                },
-              ),
-        loading: () => const Column(
-          children: [
-            SizedBox(height: 16),
-            _AddressPlaceholder(),
-            SizedBox(height: 12),
-            _AddressPlaceholder(),
-          ],
+      body: ResponsiveContainer(
+        maxWidth: 900,
+        child: addressState.when(
+          data: (addresses) => addresses.isEmpty
+              ? _buildEmptyState(context)
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: addresses.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final address = addresses[index];
+                    return _AddressCard(address: address);
+                  },
+                ),
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                SizedBox(height: 16),
+                AddressCardSkeleton(),
+                SizedBox(height: 12),
+                AddressCardSkeleton(),
+              ],
+            ),
+          ),
+          error: (err, _) => Center(
+            child: Text(
+              'Error: $err',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
         ),
-        error: (err, _) => Center(child: Text('Error: $err')),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: FilledButton.icon(
-          onPressed: () => context.push('/profile/addresses/add'),
-          icon: const Icon(Icons.add),
-          label: const Text('Add New Address'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(double.infinity, 54),
+      bottomNavigationBar: ResponsiveContainer.bottomBar(
+        maxWidth: 900,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton.icon(
+            onPressed: () => context.push('/profile/addresses/add'),
+            icon: const Icon(Icons.add),
+            label: const Text('Add New Address'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 54),
+            ),
           ),
         ),
       ),
@@ -58,14 +73,17 @@ class AddressListScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.location_off_outlined, size: 80, color: theme.colorScheme.outlineVariant),
+          Icon(Icons.location_off_outlined, size: 80, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(height: 16),
           Text(
             'No saved addresses',
             style: theme.textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
-          Text('Add an address for faster checkout', style: theme.textTheme.bodyMedium),
+          Text(
+            'Add an address for faster checkout',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -85,7 +103,7 @@ class _AddressCard extends ConsumerWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: address.isDefault ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.1),
+          color: address.isDefault ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
           width: address.isDefault ? 1.5 : 1,
         ),
       ),
@@ -161,14 +179,4 @@ class _AddressCard extends ConsumerWidget {
   }
 }
 
-class _AddressPlaceholder extends StatelessWidget {
-  const _AddressPlaceholder();
 
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: ShimmerWidget.rectangular(height: 100),
-    );
-  }
-}

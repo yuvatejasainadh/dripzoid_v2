@@ -45,6 +45,7 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(productListProvider);
+    final columns = LayoutUtils.getGridColumnCount(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -58,41 +59,43 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(productListProvider.notifier).loadProducts(refresh: true),
-        child: state.products.isEmpty && state.isLoading
-            ? _buildLoadingGrid()
-            : state.products.isEmpty
-                ? const Center(child: Text('No products found'))
-                : GridView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: LayoutUtils.getProductGridRatio(context),
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
+        child: ResponsiveContainer(
+          child: state.products.isEmpty && state.isLoading
+              ? _buildLoadingGrid(columns)
+              : state.products.isEmpty
+                  ? const Center(child: Text('No products found'))
+                  : GridView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        childAspectRatio: LayoutUtils.getProductGridRatio(context),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                      ),
+                      itemCount: state.products.length + (state.hasReachedMax ? 0 : 1),
+                      itemBuilder: (context, index) {
+                        if (index >= state.products.length) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        return ProductCard(product: state.products[index]);
+                      },
                     ),
-                    itemCount: state.products.length + (state.hasReachedMax ? 0 : 1),
-                    itemBuilder: (context, index) {
-                      if (index >= state.products.length) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      return ProductCard(product: state.products[index]);
-                    },
-                  ),
+        ),
       ),
     );
   }
 
-  Widget _buildLoadingGrid() {
+  Widget _buildLoadingGrid(int columns) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: columns,
         childAspectRatio: LayoutUtils.getProductGridRatio(context),
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
       ),
-      itemCount: 6,
+      itemCount: columns * 2,
       itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
     );
   }
@@ -101,6 +104,7 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: LayoutUtils.maxFormWidth),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => const FilterBottomSheet(),
     );
@@ -125,9 +129,10 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
-      child: Column(
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -183,7 +188,8 @@ class _FilterBottomSheetState extends ConsumerState<FilterBottomSheet> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 

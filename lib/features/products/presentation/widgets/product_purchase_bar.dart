@@ -22,7 +22,7 @@ class ProductPurchaseBar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         boxShadow: [
@@ -33,7 +33,7 @@ class ProductPurchaseBar extends StatelessWidget {
           ),
         ],
         border: Border(
-          top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Row(
@@ -58,9 +58,16 @@ class ProductPurchaseBar extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onBuyNow,
                 icon: const Icon(Icons.flash_on, size: 20),
-                label: const Text('Buy Now', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'Buy Now',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  foregroundColor: theme.colorScheme.primary,
                   side: BorderSide(color: theme.colorScheme.primary, width: 2),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),

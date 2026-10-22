@@ -1,5 +1,5 @@
-
 import 'user_model.dart';
+
 class LoginResponse {
   final bool success;
   final String message;
@@ -14,11 +14,12 @@ class LoginResponse {
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    final userData = json["user"] ?? (json["data"] is Map ? (json["data"]["user"] ?? json["data"]) : null) ?? json;
     return LoginResponse(
-      success: json["success"] ?? false,
-      message: json["message"] ?? "",
-      sessionId: json["sessionId"]?.toString(),
-      user: UserModel.fromJson(json["user"]),
+      success: json["success"] == true || json["status"] == "success",
+      message: json["message"]?.toString() ?? "",
+      sessionId: json["sessionId"]?.toString() ?? json["token"]?.toString() ?? json["accessToken"]?.toString(),
+      user: UserModel.fromJson(userData is Map<String, dynamic> ? userData : Map<String, dynamic>.from(userData as Map)),
     );
   }
 }

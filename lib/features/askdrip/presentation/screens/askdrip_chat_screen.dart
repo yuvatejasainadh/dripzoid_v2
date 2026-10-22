@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../providers/askdrip_notifier.dart';
 import '../providers/conversations_notifier.dart';
 import '../widgets/chat_bubble.dart';
@@ -73,20 +74,25 @@ class _AskDripChatScreenState extends ConsumerState<AskDripChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_comment_outlined),
+            tooltip: 'New Chat',
             onPressed: () {
               ref.read(activeConversationIdProvider.notifier).state = null;
+              ref.read(askDripNotifierProvider(null).notifier).resetFreshChat();
             },
           ),
         ],
       ),
       drawer: const _ConversationHistoryDrawer(),
-      body: Column(
-        children: [
-          Expanded(
-            child: _buildChatContent(messagesAsync),
-          ),
-          _buildInputArea(theme, messagesAsync.isLoading),
-        ],
+      body: ResponsiveContainer(
+        maxWidth: LayoutUtils.maxChatWidth,
+        child: Column(
+          children: [
+            Expanded(
+              child: _buildChatContent(messagesAsync),
+            ),
+            _buildInputArea(theme, messagesAsync.isLoading),
+          ],
+        ),
       ),
     );
   }
@@ -97,7 +103,30 @@ class _AskDripChatScreenState extends ConsumerState<AskDripChatScreen> {
     }
 
     if (state.hasError && !state.hasValue) {
-      return Center(child: Text('Error: ${state.error}'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Error: ${state.error}',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton.tonal(
+                onPressed: () {
+                  final activeId = ref.read(activeConversationIdProvider);
+                  ref.invalidate(askDripNotifierProvider(activeId));
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final messages = state.value ?? [];
@@ -150,8 +179,8 @@ class _AskDripChatScreenState extends ConsumerState<AskDripChatScreen> {
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white, size: 18),
                     onPressed: () {
-                      // We can't easily clear the error from AsyncValue without refetching,
-                      // but we can at least hide it or wait for next send.
+                      final activeId = ref.read(activeConversationIdProvider);
+                      ref.read(askDripNotifierProvider(activeId).notifier).clearError();
                     },
                   ),
                 ],
@@ -280,6 +309,7 @@ class _ConversationHistoryDrawer extends ConsumerWidget {
                               ref.read(conversationsNotifierProvider.notifier).deleteConversation(conv.id);
                               if (isSelected) {
                                 ref.read(activeConversationIdProvider.notifier).state = null;
+                                ref.read(askDripNotifierProvider(null).notifier).resetFreshChat();
                               }
                             },
                           ),

@@ -31,12 +31,56 @@ abstract class ProductModel with _$ProductModel {
     @Default([]) List<dynamic> reviews,
   }) = _ProductModel;
 
-  factory ProductModel.fromJson(Map<String, dynamic> json) =>
-      _$ProductModelFromJson(json);
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> normalized = Map<String, dynamic>.from(json);
+
+    if ((normalized['id'] == null || normalized['id'].toString().isEmpty) && normalized['_id'] != null) {
+      normalized['id'] = normalized['_id'].toString();
+    } else if (normalized['id'] == null) {
+      normalized['id'] = '';
+    } else {
+      normalized['id'] = normalized['id'].toString();
+    }
+
+    if (normalized['name'] == null) {
+      normalized['name'] = 'Unnamed Product';
+    }
+
+    if (normalized['slug'] == null) {
+      final nameStr = normalized['name'].toString();
+      normalized['slug'] = nameStr.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    }
+
+    return _$ProductModelFromJson(normalized);
+  }
 }
 
 extension ProductX on ProductModel {
-  bool get inStock => stock > 0 || totalStock > 0;
+  bool get hasActiveSizeStock =>
+      sizeStock != null && sizeStock!.values.any((s) => s > 0);
+
+  int getStockForSize(String? size) {
+    if (hasActiveSizeStock) {
+      if (size != null && size.isNotEmpty) {
+        return sizeStock![size] ?? 0;
+      }
+      return totalStock > 0 ? totalStock : stock;
+    }
+    // Unseeded sizes or unsized product: fallback to master product stock
+    return stock > 0 ? stock : totalStock;
+  }
+
+  bool isSizeInStock(String size) {
+    if (hasActiveSizeStock) {
+      return (sizeStock?[size] ?? 0) > 0;
+    }
+    return (stock > 0 || totalStock > 0);
+  }
+
+  bool get inStock =>
+      stock > 0 ||
+      totalStock > 0 ||
+      (sizeStock != null && sizeStock!.values.any((s) => s > 0));
   
   double get discountPercentage {
     if (originalPrice == null || originalPrice! <= price) return 0.0;

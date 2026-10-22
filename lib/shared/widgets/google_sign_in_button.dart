@@ -45,10 +45,14 @@ class GoogleSignInButton extends StatelessWidget {
                 width: 20,
                 height: 20,
               ),
-        label: Text(
-          label,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+        label: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
           ),
         ),
       ),
