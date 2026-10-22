@@ -67,7 +67,29 @@ class _ImageGalleryState extends State<ImageGallery> {
                         imageUrl: widget.images[index],
                         fit: widget.fit,
                         placeholder: (context, url) => const ShimmerWidget(),
-                        errorWidget: (context, url, error) => const Icon(Icons.broken_image),
+                        errorWidget: (context, url, error) => Container(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 48,
+                                  color: theme.colorScheme.outline,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Image unavailable',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.outline,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   );

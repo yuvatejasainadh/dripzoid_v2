@@ -19,15 +19,15 @@ class TrackingTimelineWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Column(
           children: [
-            Icon(Icons.history_rounded, size: 32, color: colorScheme.outline),
+            Icon(Icons.history_rounded, size: 32, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(
               'No tracking updates yet',
-              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+              style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -39,7 +39,7 @@ class TrackingTimelineWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +93,7 @@ class _TrackingStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final primaryColor = isFirst ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.5);
+    final primaryColor = isFirst ? colorScheme.primary : colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
 
     return IntrinsicHeight(
       child: Row(
@@ -125,7 +125,7 @@ class _TrackingStep extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: 2.0,
-                    color: colorScheme.outline.withValues(alpha: 0.15),
+                    color: colorScheme.outlineVariant,
                   ),
                 ),
             ],
@@ -140,14 +140,14 @@ class _TrackingStep extends StatelessWidget {
                   info.title,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: isFirst ? FontWeight.bold : FontWeight.w600,
-                    color: isFirst ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: isFirst ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   info.description,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: colorScheme.onSurfaceVariant,
                     height: 1.3,
                   ),
                 ),
@@ -157,11 +157,15 @@ class _TrackingStep extends StatelessWidget {
                     children: [
                       Icon(Icons.location_on_outlined, size: 12, color: colorScheme.primary),
                       const SizedBox(width: 4),
-                      Text(
-                        location!,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          location!,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -171,7 +175,7 @@ class _TrackingStep extends StatelessWidget {
                 Text(
                   TrackingFormatter.formatDateTime(timestamp),
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.outline,
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 10,
                   ),
                 ),

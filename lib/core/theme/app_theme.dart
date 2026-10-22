@@ -14,6 +14,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: AppColorScheme.light,
       scaffoldBackgroundColor: AppColors.lightBackground,
+      cardColor: AppColors.lightCard,
       textTheme: AppTextTheme.light,
       dividerTheme: const DividerThemeData(
         color: AppColors.lightDivider,
@@ -112,6 +113,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: AppColorScheme.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
+      cardColor: AppColors.darkCard,
       textTheme: AppTextTheme.dark,
       dividerTheme: const DividerThemeData(
         color: AppColors.darkDivider,

@@ -20,8 +20,16 @@ abstract class AddressModel with _$AddressModel {
     DateTime? createdAt,
   }) = _AddressModel;
 
-  factory AddressModel.fromJson(Map<String, dynamic> json) =>
-      _$AddressModelFromJson(json);
+  factory AddressModel.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> normalized = Map<String, dynamic>.from(json);
+    if ((normalized['id'] == null || normalized['id'].toString().isEmpty) && normalized['_id'] != null) {
+      normalized['id'] = normalized['_id'].toString();
+    }
+    if (normalized.containsKey('isDefault')) {
+      normalized['is_default'] = normalized['isDefault'];
+    }
+    return _$AddressModelFromJson(normalized);
+  }
 }
 
 extension AddressX on AddressModel {

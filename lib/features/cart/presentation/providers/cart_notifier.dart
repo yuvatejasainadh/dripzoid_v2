@@ -54,6 +54,8 @@ final cartProvider = NotifierProvider<CartNotifier, CartState>(() {
 });
 
 class CartNotifier extends Notifier<CartState> {
+  final Set<String> _pendingCartItemIds = {};
+
   @override
   CartState build() {
     return const CartState();
@@ -66,8 +68,10 @@ class CartNotifier extends Notifier<CartState> {
     final result = await _repository.getCart();
 
     state = switch (result) {
-      Success(data: final List<CartItemModel> items) => state.copyWith(items: items, isLoading: false),
-      Failure(message: final String msg) => state.copyWith(errorMessage: msg, isLoading: false),
+      Success(data: final List<CartItemModel> items) =>
+        state.copyWith(items: items, isLoading: false, errorMessage: null),
+      Failure(message: final String msg) =>
+        state.copyWith(errorMessage: msg, isLoading: false),
     };
   }
 
@@ -77,20 +81,30 @@ class CartNotifier extends Notifier<CartState> {
     String? size,
     String? color,
   }) async {
-    state = state.copyWith(isLoading: true);
-    final result = await _repository.addToCart(
-      productId: productId,
-      quantity: quantity,
-      selectedSize: size,
-      selectedColor: color,
-    );
+    if (quantity <= 0) return false;
 
-    if (result is Success) {
-      await fetchCart();
-      return true;
-    } else {
-      state = state.copyWith(isLoading: false, errorMessage: (result as Failure).message);
-      return false;
+    final opKey = 'add-$productId-$size-$color';
+    if (_pendingCartItemIds.contains(opKey)) return false;
+    _pendingCartItemIds.add(opKey);
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final result = await _repository.addToCart(
+        productId: productId,
+        quantity: quantity,
+        selectedSize: size,
+        selectedColor: color,
+      );
+
+      if (result is Success) {
+        await fetchCart();
+        return true;
+      } else {
+        state = state.copyWith(isLoading: false, errorMessage: (result as Failure).message);
+        return false;
+      }
+    } finally {
+      _pendingCartItemIds.remove(opKey);
     }
   }
 
@@ -100,23 +114,103 @@ class CartNotifier extends Notifier<CartState> {
       return;
     }
 
-    final result = await _repository.updateCartItem(cartId: cartId, quantity: quantity);
-    if (result is Success) {
-      await fetchCart();
+    if (_pendingCartItemIds.contains(cartId)) return;
+    _pendingCartItemIds.add(cartId);
+
+    final previousItems = state.items;
+    final itemIndex = state.items.indexWhere((it) => it.id == cartId);
+
+    int boundedQuantity = quantity;
+    if (itemIndex != -1) {
+      final targetItem = state.items[itemIndex];
+      final maxStock = (targetItem.stock != null && targetItem.stock! > 0) ? targetItem.stock! : 99;
+      boundedQuantity = quantity > maxStock ? maxStock : quantity;
+
+      // Optimistic local state update for instant UI responsiveness
+      final updatedItems = List<CartItemModel>.from(state.items);
+      updatedItems[itemIndex] = targetItem.copyWith(quantity: boundedQuantity);
+      state = state.copyWith(items: updatedItems, errorMessage: null);
+    }
+
+    try {
+      final result = await _repository.updateCartItem(cartId: cartId, quantity: boundedQuantity);
+      if (result is Success) {
+        await fetchCart();
+      } else {
+        // Rollback on failure if item was in state
+        if (itemIndex != -1) {
+          state = state.copyWith(
+            items: previousItems,
+            errorMessage: (result as Failure).message,
+          );
+        } else {
+          state = state.copyWith(errorMessage: (result as Failure).message);
+        }
+      }
+    } catch (e) {
+      if (itemIndex != -1) {
+        state = state.copyWith(
+          items: previousItems,
+          errorMessage: 'Failed to update item quantity',
+        );
+      } else {
+        state = state.copyWith(errorMessage: 'Failed to update item quantity');
+      }
+    } finally {
+      _pendingCartItemIds.remove(cartId);
     }
   }
 
   Future<void> removeFromCart(String cartId) async {
-    final result = await _repository.deleteCartItem(cartId);
-    if (result is Success) {
-      await fetchCart();
+    if (_pendingCartItemIds.contains(cartId)) return;
+    _pendingCartItemIds.add(cartId);
+
+    final previousItems = state.items;
+    final itemIndex = state.items.indexWhere((it) => it.id == cartId);
+    if (itemIndex != -1) {
+      final updatedItems = state.items.where((it) => it.id != cartId).toList();
+      state = state.copyWith(items: updatedItems, errorMessage: null);
+    }
+
+    try {
+      final result = await _repository.deleteCartItem(cartId);
+      if (result is Success) {
+        await fetchCart();
+      } else {
+        if (itemIndex != -1) {
+          state = state.copyWith(
+            items: previousItems,
+            errorMessage: (result as Failure).message,
+          );
+        } else {
+          state = state.copyWith(errorMessage: (result as Failure).message);
+        }
+      }
+    } catch (e) {
+      if (itemIndex != -1) {
+        state = state.copyWith(
+          items: previousItems,
+          errorMessage: 'Failed to remove item from cart',
+        );
+      } else {
+        state = state.copyWith(errorMessage: 'Failed to remove item from cart');
+      }
+    } finally {
+      _pendingCartItemIds.remove(cartId);
     }
   }
 
   Future<void> clearCart() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
     final result = await _repository.clearCart();
-    if (result is Success) {
-      state = state.copyWith(items: []);
-    }
+    state = switch (result) {
+      Success() => state.copyWith(items: [], isLoading: false, errorMessage: null),
+      Failure(message: final msg) => state.copyWith(isLoading: false, errorMessage: msg),
+    };
+  }
+
+  void reset() {
+    _pendingCartItemIds.clear();
+    state = const CartState();
   }
 }

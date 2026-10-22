@@ -14,9 +14,10 @@ class AppColorScheme {
     onError: Colors.white,
     surface: AppColors.lightSurface,
     onSurface: AppColors.lightTextPrimary,
+    onSurfaceVariant: AppColors.lightTextSecondary,
     surfaceContainerHighest: AppColors.lightSurfaceVariant,
-    outline: AppColors.lightBorder,
-    outlineVariant: AppColors.lightDivider,
+    outline: AppColors.lightTextTertiary,
+    outlineVariant: AppColors.lightBorder,
     shadow: Colors.black,
   );
 
@@ -30,9 +31,10 @@ class AppColorScheme {
     onError: Colors.white,
     surface: AppColors.darkSurface,
     onSurface: AppColors.darkTextPrimary,
+    onSurfaceVariant: AppColors.darkTextSecondary,
     surfaceContainerHighest: AppColors.darkSurfaceVariant,
-    outline: AppColors.darkBorder,
-    outlineVariant: AppColors.darkDivider,
+    outline: AppColors.darkTextTertiary,
+    outlineVariant: AppColors.darkBorder,
     shadow: Colors.black,
   );
 }

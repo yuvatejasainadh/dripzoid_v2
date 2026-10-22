@@ -64,6 +64,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           location.startsWith('/profile') ||
           location.startsWith('/shop') ||
           location.startsWith('/checkout') ||
+          location.startsWith('/order-success') ||
           location.startsWith('/product');
 
       // 1. Handle Initial State - Stay on Splash
@@ -102,9 +103,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       name: 'product',
       parentNavigatorKey: _rootNavigatorKey,
       path: '/product/:id',
-      builder: (context, state) {
-        final id = state.pathParameters['id']!;
-        return ProductDetailsScreen(productId: id);
+      redirect: (context, state) {
+        final id = state.pathParameters['id'];
+        if (id == null || id.trim().isEmpty) {
+          return '/home';
+        }
+        return null;
+      },
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id'] ?? '';
+        return MaterialPage(
+          key: ValueKey('product_${id}_${state.pageKey.value}'),
+          child: ProductDetailsScreen(productId: id),
+        );
       },
     ),
 
@@ -168,8 +179,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ),
                 GoRoute(
                   path: 'order-details/:id',
+                  redirect: (context, state) {
+                    final id = state.pathParameters['id'];
+                    if (id == null || id.trim().isEmpty) {
+                      return '/profile/orders';
+                    }
+                    return null;
+                  },
                   builder: (context, state) {
-                    final id = state.pathParameters['id']!;
+                    final id = state.pathParameters['id'] ?? '';
                     return OrderDetailsScreen(orderId: id);
                   },
                 ),
@@ -196,7 +214,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     GoRoute(
                       path: 'edit',
                       builder: (context, state) {
-                        final address = state.extra as AddressModel?;
+                        final address = state.extra is AddressModel ? state.extra as AddressModel : null;
                         return AddressFormScreen(address: address);
                       },
                     ),
@@ -222,8 +240,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/checkout',
+      redirect: (context, state) {
+        final extra = state.extra;
+        final isValid = extra is List && extra.isNotEmpty && extra.every((item) => item is CartItemModel);
+        if (!isValid) {
+          return '/cart';
+        }
+        return null;
+      },
       builder: (context, state) {
-        final items = state.extra as List<CartItemModel>;
+        final extra = state.extra;
+        final items = (extra is List)
+            ? extra.whereType<CartItemModel>().toList()
+            : <CartItemModel>[];
         return CheckoutScreen(items: items);
       },
     ),
@@ -231,8 +260,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/order-success',
+      redirect: (context, state) {
+        if (state.extra is! OrderModel) {
+          return '/profile/orders';
+        }
+        return null;
+      },
       builder: (context, state) {
-        final order = state.extra as OrderModel;
+        final order = state.extra is OrderModel ? state.extra as OrderModel : null;
+        if (order == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         return OrderSuccessScreen(order: order);
       },
     ),
@@ -253,8 +293,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/register-otp',
+      redirect: (context, state) {
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'];
+        if (email == null || email.trim().isEmpty) {
+          return '/register-email';
+        }
+        return null;
+      },
       builder: (context, state) {
-        final email = state.extra as String;
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'] ?? '';
         return RegisterOtpScreen(email: email);
       },
     ),
@@ -262,8 +313,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/register-details',
+      redirect: (context, state) {
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'];
+        if (email == null || email.trim().isEmpty) {
+          return '/register-email';
+        }
+        return null;
+      },
       builder: (context, state) {
-        final email = state.extra as String;
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'] ?? '';
         return RegisterDetailsScreen(email: email);
       },
     ),
@@ -277,8 +339,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/forgot-otp',
+      redirect: (context, state) {
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'];
+        if (email == null || email.trim().isEmpty) {
+          return '/forgot-password';
+        }
+        return null;
+      },
       builder: (context, state) {
-        final email = state.extra as String;
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'] ?? '';
         return ForgotOtpScreen(email: email);
       },
     ),
@@ -286,8 +359,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/reset-password',
+      redirect: (context, state) {
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'];
+        if (email == null || email.trim().isEmpty) {
+          return '/forgot-password';
+        }
+        return null;
+      },
       builder: (context, state) {
-        final email = state.extra as String;
+        final email = state.extra is String && (state.extra as String).trim().isNotEmpty
+            ? state.extra as String
+            : state.uri.queryParameters['email'] ?? '';
         return ResetPasswordScreen(email: email);
       },
     ),

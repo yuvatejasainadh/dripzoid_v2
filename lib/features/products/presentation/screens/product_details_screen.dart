@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/ui/dialogs/premium_alert.dart';
 import '../../../../core/ui/snackbars/premium_snackbar.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/image_gallery.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -19,297 +20,472 @@ import '../providers/product_details_notifier.dart';
 import '../widgets/product_lightbox.dart';
 import '../widgets/product_purchase_bar.dart';
 
-class ProductDetailsScreen extends ConsumerWidget {
+class ProductDetailsScreen extends ConsumerStatefulWidget {
   final String productId;
 
   const ProductDetailsScreen({super.key, required this.productId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(productDetailsProvider(productId));
-    final isWishlisted = ref.watch(wishlistProvider.select((s) => s.isWishlisted(productId)));
+  ConsumerState<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+}
+
+class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _pincodeController = TextEditingController();
+  bool _isNavigating = false;
+
+  void _navigateToCart() {
+    if (_isNavigating) return;
+    _isNavigating = true;
+    context.go('/cart');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!mounted || !_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 300) {
+      ref.read(productDetailsProvider(widget.productId).notifier).loadMoreRelatedProducts();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _pincodeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(productDetailsProvider(widget.productId));
+    final isWishlisted = ref.watch(wishlistProvider.select((s) => s.isWishlisted(widget.productId)));
     final cartState = ref.watch(cartProvider);
-    final bool isInCart = cartState.isInCart(productId, state.selectedSize, state.selectedColor);
+    final bool isInCart = cartState.isInCart(widget.productId, state.selectedSize, state.selectedColor);
     
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDesktop = LayoutUtils.isDesktop(context);
 
     if (state.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     if (state.errorMessage != null) {
       return Scaffold(
-        body: Center(child: Text(state.errorMessage!)),
+        appBar: AppBar(leading: const BackButton()),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline_rounded, size: 64, color: Colors.redAccent),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load product details',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.errorMessage!,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => ref.read(productDetailsProvider(widget.productId).notifier).loadProductDetails(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
     final product = state.product;
-    if (product == null) return const Scaffold();
-
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image Gallery
-            Stack(
+    if (product == null) {
+      return Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Hero(
-                  tag: 'product_$productId',
-                  child: ImageGallery(
-                    images: product.images,
-                    onImageTap: (index) => _openLightbox(context, product.images, index),
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 64,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Product Not Found',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 10,
-                  right: 20,
-                  child: Column(
-                    children: [
-                      Hero(
-                        tag: 'wishlist_$productId',
-                        child: _buildFloatingAction(
-                          context,
-                          icon: isWishlisted ? Icons.favorite : Icons.favorite_border,
-                          color: isWishlisted ? theme.colorScheme.error : theme.colorScheme.onSurface,
-                          onTap: () => ref.read(wishlistProvider.notifier).toggleWishlist(productId),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildFloatingAction(
-                        context,
-                        icon: Icons.share_outlined,
-                        onTap: () {}, // TODO: Share
-                      ),
-                    ],
+                const SizedBox(height: 8),
+                Text(
+                  'The requested product could not be located.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => ref
+                      .read(productDetailsProvider(widget.productId).notifier)
+                      .loadProductDetails(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
                 ),
               ],
             ),
+          ),
+        ),
+      );
+    }
 
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Basic Info
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.name,
-                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      if (product.rating != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.amber,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                product.rating!.toStringAsFixed(1),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 2),
-                              const Icon(Icons.star, color: Colors.black, size: 12),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    product.subcategory ?? product.category ?? '',
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline),
-                  ),
-                  const SizedBox(height: 16),
+    final availableStock = product.getStockForSize(state.selectedSize.isNotEmpty ? state.selectedSize : null);
 
-                  // Price
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '₹${product.price.round()}',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      if (product.hasDiscount) ...[
-                        const SizedBox(width: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            '₹${product.originalPrice?.round()}',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              decoration: TextDecoration.lineThrough,
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.secondary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '${product.discountPercentage.round()}% OFF',
-                              style: TextStyle(
-                                color: theme.colorScheme.secondary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Stock Status
-                  _buildStockBadge(context, product, state.selectedSize),
-                  const SizedBox(height: 24),
-
-                  // Color Picker
-                  if (product.colors.isNotEmpty) ...[
-                    const Text('Select Color', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    ColorPicker(
-                      colors: product.colors,
-                      selectedColor: state.selectedColor,
-                      onSelected: (color) => ref
-                          .read(productDetailsProvider(productId).notifier)
-                          .selectColor(color),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Size Picker
-                  if (product.sizes.isNotEmpty || (product.sizeStock?.isNotEmpty ?? false)) ...[
-                    const Text('Select Size', style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    SizePicker(
-                      sizes: product.sizes.isNotEmpty ? product.sizes : (product.sizeStock?.keys.toList() ?? []),
-                      sizeStock: product.sizeStock,
-                      selectedSize: state.selectedSize,
-                      onSelected: (size) => ref
-                          .read(productDetailsProvider(productId).notifier)
-                          .selectSize(size),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Quantity
-                  const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  QuantitySelector(
-                    quantity: state.quantity,
-                    onChanged: (q) => ref
-                        .read(productDetailsProvider(productId).notifier)
-                        .updateQuantity(q),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Delivery Check
-                  _buildDeliveryCheck(context, ref, productId, state),
-                  const SizedBox(height: 32),
-
-                  // Expandable Product Info
-                  _buildInfoSection(context, 'Product Details', product.description ?? 'No description available.'),
-                  _buildInfoSection(context, 'Material & Care', 'Premium quality fabric. Hand wash recommended.'),
-                  _buildInfoSection(context, 'Size Guide', 'Available in S, M, L, XL. Standard regular fit.'),
-                  
-                  const SizedBox(height: 32),
-
-                  // Reviews
-                  _buildReviewSection(context, ref, theme, state),
-                  const SizedBox(height: 32),
-
-                  // Related Products
-                  if (state.relatedProducts.isNotEmpty) ...[
-                    const Text('You May Also Like', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 360,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: state.relatedProducts.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: 16),
-                        itemBuilder: (context, index) {
-                          return SizedBox(
-                            width: 180,
-                            child: ProductCard(
-                              product: state.relatedProducts[index],
-                              heroSuffix: 'related',
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 120),
-                ],
-              ),
-            ),
-          ],
+    final galleryWidget = Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant,
+            width: 1.5,
+          ),
         ),
       ),
-      bottomNavigationBar: ProductPurchaseBar(
-        isAvailable: product.inStock,
-        isInCart: isInCart,
-        isLoading: cartState.isLoading,
-        onAddToCart: () async {
-          if (isInCart) {
-            context.push('/cart');
-            return;
-          }
-          final success = await ref.read(cartProvider.notifier).addToCart(
-            productId: productId,
-            quantity: state.quantity,
-            size: state.selectedSize,
-            color: state.selectedColor,
-          );
-          if (success && context.mounted) {
-            final confirmed = await PremiumAlert.confirm(
-              context,
-              title: 'Added to Cart',
-              message: '${product.name} has been added to your bag.',
-              confirmText: 'Go to Cart',
-              cancelText: 'Continue Shopping',
-            );
-            if (confirmed && context.mounted) {
-              context.push('/cart');
-            }
-          }
-        },
-        onBuyNow: () {
-          context.push('/checkout', extra: [
-            CartItemModel(
-              id: 'temp_$productId',
-              productId: productId,
-              name: product.name,
-              price: product.price,
-              quantity: state.quantity,
-              selectedSize: state.selectedSize,
-              selectedColor: state.selectedColor,
+      child: Stack(
+        children: [
+          Hero(
+            tag: 'product_${widget.productId}',
+            child: ImageGallery(
               images: product.images,
-            )
-          ]);
-        },
+              onImageTap: (index) => _openLightbox(context, product.images, index),
+            ),
+          ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Column(
+              children: [
+                Hero(
+                  tag: 'wishlist_${widget.productId}',
+                  child: _buildFloatingAction(
+                    context,
+                    icon: isWishlisted ? Icons.favorite : Icons.favorite_border,
+                    color: isWishlisted ? theme.colorScheme.error : theme.colorScheme.onSurface,
+                    onTap: () => ref.read(wishlistProvider.notifier).toggleWishlist(widget.productId),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildFloatingAction(
+                  context,
+                  icon: Icons.share_outlined,
+                  onTap: () {}, // Share
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final detailsContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Basic Info
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                product.name,
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (product.rating != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      product.rating!.toStringAsFixed(1),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.star, color: Colors.black, size: 12),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          product.subcategory ?? product.category ?? '',
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+
+        // Price
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            Text(
+              '₹${product.price.round()}',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colorScheme.primary,
+              ),
+            ),
+            if (product.hasDiscount) ...[
+              Text(
+                '₹${product.originalPrice?.round()}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${product.discountPercentage.round()}% OFF',
+                  style: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Stock Status
+        _buildStockBadge(context, product, state.selectedSize),
+        const SizedBox(height: 24),
+
+        // Color Picker
+        if (product.colors.isNotEmpty) ...[
+          const Text('Select Color', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          ColorPicker(
+            colors: product.colors,
+            selectedColor: state.selectedColor,
+            onSelected: (color) => ref
+                .read(productDetailsProvider(widget.productId).notifier)
+                .selectColor(color),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // Size Picker
+        if (product.sizes.isNotEmpty || (product.sizeStock?.isNotEmpty ?? false)) ...[
+          const Text('Select Size', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          SizePicker(
+            sizes: product.sizes.isNotEmpty ? product.sizes : (product.sizeStock?.keys.toList() ?? []),
+            sizeStock: product.sizeStock,
+            masterStock: product.stock > 0 ? product.stock : product.totalStock,
+            selectedSize: state.selectedSize,
+            onSelected: (size) => ref
+                .read(productDetailsProvider(widget.productId).notifier)
+                .selectSize(size),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // Quantity
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold)),
+            if (availableStock > 0 && availableStock <= 5)
+              Text(
+                'Only $availableStock left!',
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        QuantitySelector(
+          quantity: state.quantity,
+          maxQuantity: availableStock > 0 ? availableStock : 1,
+          onChanged: (q) => ref
+              .read(productDetailsProvider(widget.productId).notifier)
+              .updateQuantity(q),
+          onMaxReached: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Only $availableStock items available in stock'),
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 32),
+
+        // Delivery Check
+        _buildDeliveryCheck(context, ref, widget.productId, state),
+        const SizedBox(height: 32),
+
+        // Expandable Product Info
+        _buildInfoSection(context, 'Product Details', product.description ?? 'No description available.'),
+        _buildInfoSection(context, 'Material & Care', 'Premium quality fabric. Hand wash recommended.'),
+        _buildInfoSection(context, 'Size Guide', 'Available in S, M, L, XL. Standard regular fit.'),
+
+        const SizedBox(height: 32),
+
+        // Reviews
+        _buildReviewSection(context, ref, theme, state),
+        const SizedBox(height: 32),
+
+        // Related Products & Infinite Scroll Section
+        if (state.relatedProducts.isNotEmpty) ...[
+          const Text('You May Also Like', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 360,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: state.relatedProducts.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                return SizedBox(
+                  width: 180,
+                  child: ProductCard(
+                    product: state.relatedProducts[index],
+                    heroSuffix: 'related_$index',
+                  ),
+                );
+              },
+            ),
+          ),
+          if (state.isLoadingMoreRelated)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+        ],
+        const SizedBox(height: 120),
+      ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: const BackButton(),
+        title: Text(product.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        child: ResponsiveContainer(
+          child: isDesktop
+              ? Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 5, child: galleryWidget),
+                      const SizedBox(width: 32),
+                      Expanded(flex: 7, child: detailsContent),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    galleryWidget,
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: detailsContent,
+                    ),
+                  ],
+                ),
+        ),
+      ),
+      bottomNavigationBar: ResponsiveContainer.bottomBar(
+        child: ProductPurchaseBar(
+          isAvailable: availableStock > 0,
+          isInCart: isInCart,
+          isLoading: cartState.isLoading,
+          onAddToCart: () async {
+            if (_isNavigating) return;
+            if (isInCart) {
+              _navigateToCart();
+              return;
+            }
+            final success = await ref.read(cartProvider.notifier).addToCart(
+              productId: widget.productId,
+              quantity: state.quantity,
+              size: state.selectedSize,
+              color: state.selectedColor,
+            );
+            if (success && context.mounted) {
+              final confirmed = await PremiumAlert.confirm(
+                context,
+                title: 'Added to Cart',
+                message: '${product.name} has been added to your bag.',
+                confirmText: 'Go to Cart',
+                cancelText: 'Continue Shopping',
+              );
+              if (confirmed && context.mounted) {
+                _navigateToCart();
+              }
+            }
+          },
+          onBuyNow: () {
+            if (_isNavigating) return;
+            _isNavigating = true;
+            context.push('/checkout', extra: [
+              CartItemModel(
+                id: 'temp_${widget.productId}',
+                productId: widget.productId,
+                name: product.name,
+                price: product.price,
+                quantity: state.quantity,
+                selectedSize: state.selectedSize,
+                selectedColor: state.selectedColor,
+                images: product.images,
+                stock: availableStock,
+              )
+            ]).then((_) {
+              if (mounted) setState(() => _isNavigating = false);
+            });
+          },
+        ),
       ),
     );
   }
@@ -378,10 +554,7 @@ class ProductDetailsScreen extends ConsumerWidget {
 
   Widget _buildStockBadge(BuildContext context, ProductModel product, String selectedSize) {
     final theme = Theme.of(context);
-    int stock = product.stock;
-    if (selectedSize.isNotEmpty && product.sizeStock != null) {
-      stock = product.sizeStock![selectedSize] ?? 0;
-    }
+    final int stock = product.getStockForSize(selectedSize.isNotEmpty ? selectedSize : null);
 
     if (stock <= 0) {
       return Container(
@@ -399,7 +572,7 @@ class ProductDetailsScreen extends ConsumerWidget {
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Text(
-        stock <= 5 ? 'Only $stock left' : 'In Stock',
+        stock <= 5 ? 'Only $stock left' : 'In Stock ($stock available)',
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
@@ -415,7 +588,7 @@ class ProductDetailsScreen extends ConsumerWidget {
           children: [
             Expanded(
               child: AppTextField(
-                controller: TextEditingController(), // Placeholder, needs actual state handling
+                controller: _pincodeController,
                 hintText: 'Enter PIN Code',
                 keyboardType: TextInputType.number,
                 maxLength: 6,
@@ -467,7 +640,7 @@ class ProductDetailsScreen extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${state.product?.rating?.toStringAsFixed(1) ?? "0.0"} (${state.reviews.length} reviews)',
-                        style: theme.textTheme.labelSmall,
+                        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -475,7 +648,7 @@ class ProductDetailsScreen extends ConsumerWidget {
             ),
             if (state.canReview)
               TextButton.icon(
-                onPressed: () => _showReviewComposer(context, ref),
+                onPressed: () => _showReviewComposer(context),
                 icon: const Icon(Icons.edit_note),
                 label: const Text('Write a Review'),
               ),
@@ -509,7 +682,10 @@ class ProductDetailsScreen extends ConsumerWidget {
                           : state.hasReviewed 
                             ? "You've already shared your review for this product." 
                             : 'Only verified buyers can review this product.',
-                        style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       if (!isAuthenticated)
                         GestureDetector(
@@ -535,10 +711,13 @@ class ProductDetailsScreen extends ConsumerWidget {
         
         const SizedBox(height: 16),
         if (state.reviews.isEmpty)
-          const Center(
+          Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No reviews yet. Be the first to review!'),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No reviews yet. Be the first to review!',
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
             ),
           )
         else
@@ -551,7 +730,7 @@ class ProductDetailsScreen extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () {
-                // TODO: Navigate to all reviews
+                // View all reviews
               },
               child: const Text('View All Reviews'),
             ),
@@ -560,16 +739,17 @@ class ProductDetailsScreen extends ConsumerWidget {
     );
   }
 
-  void _showReviewComposer(BuildContext context, WidgetRef ref) {
+  void _showReviewComposer(BuildContext context) {
     int selectedRating = 5;
     final textController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: LayoutUtils.maxFormWidth),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Padding(
+        builder: (context, setModalState) => Padding(
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -587,7 +767,7 @@ class ProductDetailsScreen extends ConsumerWidget {
                       size: 40,
                       color: Colors.amber,
                     ),
-                    onPressed: () => setState(() => selectedRating = ratingValue),
+                    onPressed: () => setModalState(() => selectedRating = ratingValue),
                   );
                 }),
               ),
@@ -598,18 +778,23 @@ class ProductDetailsScreen extends ConsumerWidget {
                 maxLines: 4,
               ),
               const SizedBox(height: 24),
-              PrimaryButton(
-                text: 'Submit Review',
-                loading: ref.watch(productDetailsProvider(productId)).isSubmittingReview,
-                onPressed: () async {
-                  final success = await ref.read(productDetailsProvider(productId).notifier).submitReview(
-                        rating: selectedRating,
-                        text: textController.text.trim(),
-                      );
-                  if (success && context.mounted) {
-                    Navigator.pop(context);
-                    PremiumSnackbar.showSuccess(context, 'Thank you for your review!');
-                  }
+              Consumer(
+                builder: (context, modalRef, _) {
+                  final isSubmitting = modalRef.watch(productDetailsProvider(widget.productId)).isSubmittingReview;
+                  return PrimaryButton(
+                    text: 'Submit Review',
+                    loading: isSubmitting,
+                    onPressed: () async {
+                      final success = await modalRef.read(productDetailsProvider(widget.productId).notifier).submitReview(
+                            rating: selectedRating,
+                            text: textController.text.trim(),
+                          );
+                      if (success && context.mounted) {
+                        Navigator.pop(context);
+                        PremiumSnackbar.showSuccess(context, 'Thank you for your review!');
+                      }
+                    },
+                  );
                 },
               ),
             ],

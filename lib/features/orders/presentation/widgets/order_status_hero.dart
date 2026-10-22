@@ -66,7 +66,7 @@ class OrderStatusHero extends StatelessWidget {
           Text(
             subMessage,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: color.withValues(alpha: 0.8),
+              color: color == colorScheme.primary ? colorScheme.onSurfaceVariant : color.withValues(alpha: 0.85),
             ),
           ),
           if (deliveryDate != null && !normalized.contains('delivered') && !normalized.contains('cancelled')) ...[
@@ -76,10 +76,14 @@ class OrderStatusHero extends StatelessWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: Text(
                 'Expected by ${TrackingFormatter.formatDate(deliveryDate)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
           ],

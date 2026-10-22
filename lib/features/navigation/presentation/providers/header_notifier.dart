@@ -27,7 +27,11 @@ class HeaderNotifier extends Notifier<HeaderState> {
   }
 
   void toggleSearch() {
-    state = state.copyWith(isSearchVisible: !state.isSearchVisible);
+    if (state.isSearchVisible) {
+      clearSearch();
+    } else {
+      state = state.copyWith(isSearchVisible: true);
+    }
   }
 
   void setSearchVisible(bool visible) {

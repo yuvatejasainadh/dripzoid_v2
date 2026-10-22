@@ -30,7 +30,11 @@ class AddressRepository {
   }
 
   Future<Result<AddressModel>> createAddress(Map<String, dynamic> data) async {
-    final result = await _service.createAddress(data);
+    final payload = Map<String, dynamic>.from(data);
+    if (payload.containsKey('is_default')) {
+      payload['isDefault'] = payload['is_default'];
+    }
+    final result = await _service.createAddress(payload);
     if (result is Success<Map<String, dynamic>>) {
       final addressData = result.data['address'] ?? result.data;
       return Success(AddressModel.fromJson(addressData as Map<String, dynamic>));
@@ -47,7 +51,11 @@ class AddressRepository {
     String id,
     Map<String, dynamic> data,
   ) async {
-    final result = await _service.updateAddress(id, data);
+    final payload = Map<String, dynamic>.from(data);
+    if (payload.containsKey('is_default')) {
+      payload['isDefault'] = payload['is_default'];
+    }
+    final result = await _service.updateAddress(id, payload);
     if (result is Success<Map<String, dynamic>>) {
       final addressData = result.data['address'] ?? result.data;
       return Success(AddressModel.fromJson(addressData as Map<String, dynamic>));

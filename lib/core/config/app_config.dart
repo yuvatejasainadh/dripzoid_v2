@@ -20,29 +20,29 @@ class AppConfig {
   });
 
   static AppConfig dev = AppConfig(
-    baseUrl: "https://api.dripzoid.com",
+    baseUrl: "https://drz.yuvatejasainadh.me",
     aiBaseUrl: "https://askdrip-backend.onrender.com",
     appName: "Dripzoid (Dev)",
     environment: AppEnvironment.development,
-    razorpayKey: "rzp_live_RfHNYKXeosg3XW",
+    razorpayKey: const String.fromEnvironment('RAZORPAY_KEY', defaultValue: ''),
     googleWebClientId: "83358271931-jt696gs2pb1bqssq2fer32n2ou7gjaoi.apps.googleusercontent.com",
   );
 
   static AppConfig staging = AppConfig(
-    baseUrl: "https://staging-api.dripzoid.com",
+    baseUrl: "https://drz.yuvatejasainadh.me",
     aiBaseUrl: "https://askdrip-backend.onrender.com",
     appName: "Dripzoid (Staging)",
     environment: AppEnvironment.staging,
-    razorpayKey: "rzp_live_RfHNYKXeosg3XW",
+    razorpayKey: const String.fromEnvironment('RAZORPAY_KEY', defaultValue: ''),
     googleWebClientId: "83358271931-jt696gs2pb1bqssq2fer32n2ou7gjaoi.apps.googleusercontent.com",
   );
 
   static AppConfig production = AppConfig(
-    baseUrl: "https://api.dripzoid.com",
+    baseUrl: "https://drz.yuvatejasainadh.me",
     aiBaseUrl: "https://askdrip-backend.onrender.com",
     appName: "Dripzoid",
     environment: AppEnvironment.production,
-    razorpayKey: "rzp_live_RfHNYKXeosg3XW",
+    razorpayKey: const String.fromEnvironment('RAZORPAY_KEY', defaultValue: ''),
     googleWebClientId: "83358271931-jt696gs2pb1bqssq2fer32n2ou7gjaoi.apps.googleusercontent.com",
   );
 }

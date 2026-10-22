@@ -51,9 +51,9 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
       phone: _phoneController.text.trim(),
     );
 
-    final success = await ref.read(addressProvider.notifier).addAddress(address);
-    if (success && mounted) {
-      Navigator.pop(context);
+    final created = await ref.read(addressProvider.notifier).addAddress(address);
+    if (created != null && mounted) {
+      Navigator.pop(context, created);
     }
   }
 
@@ -68,7 +68,10 @@ class _AddressFormSheetState extends ConsumerState<AddressFormSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Add New Address', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                'Add New Address',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 20),
               AppTextField(
                 controller: _labelController,

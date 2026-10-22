@@ -7,24 +7,19 @@ import '../../../../shared/widgets/category_card.dart';
 import '../../../../shared/widgets/product_card.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../providers/home_notifier.dart';
-import '../providers/search_notifier.dart';
-
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeProvider);
-    final searchState = ref.watch(searchProvider);
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () => ref.read(homeProvider.notifier).refresh(),
-        child: CustomScrollView(
-          slivers: [
-            if (searchState.query.isNotEmpty)
-              _SliverSearchResults(searchState: searchState)
-            else ...[
+        child: ResponsiveContainer(
+          child: CustomScrollView(
+            slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
               
               // Banners
@@ -37,79 +32,28 @@ class HomeScreen extends ConsumerWidget {
                     : BannerCarousel(banners: homeState.banners),
               ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // Categories
-            _SliverCategorySection(homeState: homeState),
+              // Categories
+              _SliverCategorySection(homeState: homeState),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // Featured Section
-            _SliverProductGrid(
-              title: 'Featured Picks',
-              products: homeState.featuredProducts,
-              isLoading: homeState.isLoading,
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
-
-            // Trending Section
-            _SliverTrendingSection(homeState: homeState),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SliverSearchResults extends StatelessWidget {
-  final SearchState searchState;
-  const _SliverSearchResults({required this.searchState});
-
-  @override
-  Widget build(BuildContext context) {
-    if (searchState.isLoading) {
-      return const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (searchState.results.isEmpty) {
-      return SliverFillRemaining(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.search_off_rounded, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              Text(
-                'No results for "${searchState.query}"',
-                style: const TextStyle(color: Colors.grey),
+              // Featured Section
+              _SliverProductGrid(
+                title: 'Featured Picks',
+                products: homeState.featuredProducts,
+                isLoading: homeState.isLoading,
               ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+              // Trending Section
+              _SliverTrendingSection(homeState: homeState),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
-        ),
-      );
-    }
-
-    return SliverPadding(
-      padding: const EdgeInsets.all(16),
-      sliver: SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: LayoutUtils.getProductGridRatio(context),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => ProductCard(
-            product: searchState.results[index],
-            heroSuffix: 'search',
-          ),
-          childCount: searchState.results.length,
         ),
       ),
     );
@@ -120,13 +64,39 @@ class _SliverCategorySection extends StatelessWidget {
   final HomeState homeState;
   const _SliverCategorySection({required this.homeState});
 
+  static IconData getCategoryIcon(String category) {
+    final lower = category.trim().toLowerCase();
+    switch (lower) {
+      case 'men':
+      case 'man':
+      case 'male':
+        return Icons.man;
+      case 'women':
+      case 'woman':
+      case 'female':
+        return Icons.woman;
+      case 'kids':
+      case 'kid':
+      case 'children':
+        return Icons.child_care;
+      case 'shoes':
+      case 'footwear':
+        return Icons.roller_skating_outlined;
+      case 'accessories':
+      case 'accessory':
+        return Icons.watch_outlined;
+      default:
+        return Icons.checkroom_outlined;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final categoryIcons = {
-      'Men': 'https://res.cloudinary.com/dvid0uzwo/image/upload/v1769234530/my_project/q9yp4y9u9db6plxswvqm.jpg',
-      'Women': 'https://res.cloudinary.com/dvid0uzwo/image/upload/v1769234485/my_project/jjohfsp34dtkjqpbwdju.jpg',
-      'Kids': 'https://res.cloudinary.com/dvid0uzwo/image/upload/v1769234558/my_project/axzwtgc54k9u7jcryawe.jpg',
-    };
+
+
+
+
+
 
     return SliverToBoxAdapter(
       child: Column(
@@ -159,7 +129,7 @@ class _SliverCategorySection extends StatelessWidget {
                       final category = homeState.categories[index];
                       return CategoryCard(
                         label: category.category,
-                        imageUrl: categoryIcons[category.category] ?? '',
+                        icon: getCategoryIcon(category.category),
                         onTap: () => context.push('/shop?category=${category.category}'),
                       );
                     },
@@ -184,6 +154,8 @@ class _SliverProductGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final columns = LayoutUtils.getGridColumnCount(context);
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverMainAxisGroup(
@@ -209,20 +181,20 @@ class _SliverProductGrid extends StatelessWidget {
           if (isLoading)
             SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+                crossAxisCount: columns,
                 childAspectRatio: LayoutUtils.getProductGridRatio(context),
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) => const ShimmerWidget.rectangular(height: 250),
-                childCount: 4,
+                childCount: columns * 2,
               ),
             )
           else
             SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+                crossAxisCount: columns,
                 childAspectRatio: LayoutUtils.getProductGridRatio(context),
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,

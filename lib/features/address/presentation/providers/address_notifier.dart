@@ -25,18 +25,20 @@ class AddressNotifier extends AsyncNotifier<List<AddressModel>> {
     };
   }
 
-  Future<bool> addAddress(AddressModel address) async {
+  Future<AddressModel?> addAddress(AddressModel address) async {
     state = const AsyncLoading();
     final result = await _repository.createAddress(address.toJson());
+    AddressModel? created;
     state = await AsyncValue.guard(() async {
       switch (result) {
-        case Success():
+        case Success(data: final newAddr):
+          created = newAddr;
           return loadAddresses();
         case Failure(message: final m):
           throw m;
       }
     });
-    return result is Success;
+    return created;
   }
 
   Future<bool> updateAddress(AddressModel address) async {

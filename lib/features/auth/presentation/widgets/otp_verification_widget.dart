@@ -93,7 +93,8 @@ class _OtpVerificationWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return SingleChildScrollView(
+      child: Column(
       children: [
         Text(
           "OTP sent to",
@@ -144,6 +145,7 @@ class _OtpVerificationWidgetState
             ),
           ),
       ],
+    ),
     );
   }
 }

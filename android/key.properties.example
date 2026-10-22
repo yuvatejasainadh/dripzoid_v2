@@ -1,0 +1,9 @@
+# Android Keystore configuration template
+# Copy this file to 'android/key.properties' and fill in your actual keystore credentials.
+# Do NOT commit 'key.properties' or keystore files (.jks/.keystore) to version control.
+#
+# Path can be relative to the android/ directory or an absolute path.
+storeFile=upload-keystore.jks
+storePassword=your_store_password_here
+keyAlias=your_key_alias_here
+keyPassword=your_key_password_here

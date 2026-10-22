@@ -61,7 +61,7 @@ class GoogleAuthService {
       }
       
       AppLogger.e('[GoogleAuth] Backend authentication failed with status: ${result.statusCode}');
-      return null;
+      throw Exception("Backend authentication failed with status: ${result.statusCode}");
     } catch (e) {
       if (e is GoogleSignInException) {
         if (e.code == GoogleSignInExceptionCode.canceled) {
@@ -69,15 +69,30 @@ class GoogleAuthService {
           return null;
         }
         AppLogger.e('[GoogleAuth] GoogleSignInException: ${e.code} - ${e.description}');
-      } else {
-        AppLogger.e('[GoogleAuth] Unexpected Error: $e');
+        throw Exception("Google Sign-In failed: ${e.description ?? e.code.name}");
       }
+      if (e is DioException) {
+        final responseData = e.response?.data;
+        String msg = "Backend authentication failed";
+        if (responseData is Map) {
+          msg = responseData['error']?.toString() ?? responseData['message']?.toString() ?? msg;
+        } else if (e.message != null) {
+          msg = e.message!;
+        }
+        AppLogger.e('[GoogleAuth] DioException during backend auth: $msg');
+        throw Exception(msg);
+      }
+      AppLogger.e('[GoogleAuth] Unexpected Error: $e');
       rethrow;
     }
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    AppLogger.d('[GoogleAuth] Signed out from Google');
+    try {
+      await _googleSignIn.signOut();
+      AppLogger.d('[GoogleAuth] Signed out from Google');
+    } catch (e) {
+      AppLogger.w('[GoogleAuth] SignOut exception: $e');
+    }
   }
 }

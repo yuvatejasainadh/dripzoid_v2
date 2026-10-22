@@ -48,6 +48,7 @@ class ColorPicker extends StatelessWidget {
 class SizePicker extends StatelessWidget {
   final List<String> sizes;
   final Map<String, int>? sizeStock;
+  final int masterStock;
   final String selectedSize;
   final ValueChanged<String> onSelected;
 
@@ -55,6 +56,7 @@ class SizePicker extends StatelessWidget {
     super.key,
     required this.sizes,
     this.sizeStock,
+    this.masterStock = 1,
     required this.selectedSize,
     required this.onSelected,
   });
@@ -62,13 +64,16 @@ class SizePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bool hasActiveSizeStock = sizeStock != null && sizeStock!.values.any((qty) => qty > 0);
+
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: sizes.map((s) {
         final bool isSelected = s == selectedSize;
-        final int stock = sizeStock?[s] ?? 1; // Default to 1 if no stock info
-        final bool isAvailable = stock > 0;
+        final bool isAvailable = hasActiveSizeStock
+            ? ((sizeStock?[s] ?? 0) > 0)
+            : (masterStock > 0);
 
         return InkWell(
           onTap: isAvailable ? () => onSelected(s) : null,

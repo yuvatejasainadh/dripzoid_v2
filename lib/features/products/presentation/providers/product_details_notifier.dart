@@ -32,6 +32,11 @@ class ProductDetailsState {
   final bool hasReviewed;
   final bool isSubmittingReview;
 
+  // Infinite scroll pagination for related content
+  final bool isLoadingMoreRelated;
+  final int relatedPage;
+  final bool hasReachedMaxRelated;
+
   const ProductDetailsState({
     this.product,
     this.relatedProducts = const [],
@@ -49,6 +54,9 @@ class ProductDetailsState {
     this.hasPurchased = false,
     this.hasReviewed = false,
     this.isSubmittingReview = false,
+    this.isLoadingMoreRelated = false,
+    this.relatedPage = 1,
+    this.hasReachedMaxRelated = false,
   });
 
   ProductDetailsState copyWith({
@@ -68,6 +76,9 @@ class ProductDetailsState {
     bool? hasPurchased,
     bool? hasReviewed,
     bool? isSubmittingReview,
+    bool? isLoadingMoreRelated,
+    int? relatedPage,
+    bool? hasReachedMaxRelated,
   }) {
     return ProductDetailsState(
       product: product ?? this.product,
@@ -86,6 +97,9 @@ class ProductDetailsState {
       hasPurchased: hasPurchased ?? this.hasPurchased,
       hasReviewed: hasReviewed ?? this.hasReviewed,
       isSubmittingReview: isSubmittingReview ?? this.isSubmittingReview,
+      isLoadingMoreRelated: isLoadingMoreRelated ?? this.isLoadingMoreRelated,
+      relatedPage: relatedPage ?? this.relatedPage,
+      hasReachedMaxRelated: hasReachedMaxRelated ?? this.hasReachedMaxRelated,
     );
   }
 }
@@ -135,11 +149,19 @@ class ProductDetailsNotifier extends StateNotifier<ProductDetailsState> {
       }
 
       String initialSize = '';
-      if (product.sizeStock != null && product.sizeStock!.isNotEmpty) {
-        initialSize = product.sizeStock!.keys.first;
-      } else if (product.sizes.isNotEmpty) {
-        initialSize = product.sizes.first;
+      final availableSizes = product.sizes.isNotEmpty
+          ? product.sizes
+          : (product.sizeStock?.keys.toList() ?? []);
+
+      if (availableSizes.isNotEmpty) {
+        initialSize = availableSizes.firstWhere(
+          (s) => product.isSizeInStock(s),
+          orElse: () => availableSizes.first,
+        );
       }
+
+      final initialStock = product.getStockForSize(initialSize.isNotEmpty ? initialSize : null);
+      final initialQuantity = initialStock > 0 ? 1 : 0;
 
       final eligibility = eligibilityRes is Success<ReviewEligibilityModel> 
           ? eligibilityRes.data 
@@ -156,12 +178,39 @@ class ProductDetailsNotifier extends StateNotifier<ProductDetailsState> {
         isLoading: false,
         selectedColor: initialColor,
         selectedSize: initialSize,
+        quantity: initialQuantity > 0 ? initialQuantity : 1,
       );
     } else {
       state = state.copyWith(
         isLoading: false,
         errorMessage: (productRes as Failure).message,
       );
+    }
+  }
+
+  Future<void> loadMoreRelatedProducts() async {
+    if (state.isLoadingMoreRelated || state.hasReachedMaxRelated) return;
+
+    state = state.copyWith(isLoadingMoreRelated: true);
+
+    final nextPage = state.relatedPage + 1;
+    final category = state.product?.category;
+
+    final result = await _repository.getProducts(queryParameters: {
+      'category':? category,
+      'page': nextPage,
+    });
+
+    if (result is Success<List<ProductModel>>) {
+      final newItems = result.data.where((p) => p.id != _productId && !state.relatedProducts.any((existing) => existing.id == p.id)).toList();
+      state = state.copyWith(
+        isLoadingMoreRelated: false,
+        relatedProducts: [...state.relatedProducts, ...newItems],
+        relatedPage: nextPage,
+        hasReachedMaxRelated: newItems.isEmpty || newItems.length < 10,
+      );
+    } else {
+      state = state.copyWith(isLoadingMoreRelated: false);
     }
   }
 
@@ -214,29 +263,30 @@ class ProductDetailsNotifier extends StateNotifier<ProductDetailsState> {
   }
 
   void selectSize(String size) {
-    state = state.copyWith(selectedSize: size);
+    final maxStock = _getAvailableStockForSize(size);
+    final clampedQuantity = maxStock > 0 ? state.quantity.clamp(1, maxStock) : 1;
+    state = state.copyWith(
+      selectedSize: size,
+      quantity: clampedQuantity,
+    );
   }
 
   void updateQuantity(int quantity) {
     if (quantity < 1) return;
     
-    final maxStock = _getAvailableStock();
-    if (quantity > maxStock && maxStock > 0) {
-      state = state.copyWith(quantity: maxStock);
+    final maxStock = _getAvailableStockForSize(state.selectedSize);
+    if (maxStock > 0) {
+      state = state.copyWith(quantity: quantity.clamp(1, maxStock));
     } else {
-      state = state.copyWith(quantity: quantity);
+      state = state.copyWith(quantity: 1);
     }
   }
 
-  int _getAvailableStock() {
+  int _getAvailableStockForSize([String? size]) {
     final product = state.product;
     if (product == null) return 0;
-    
-    if (state.selectedSize.isNotEmpty && product.sizeStock != null) {
-      return product.sizeStock![state.selectedSize] ?? 0;
-    }
-    
-    return product.stock > 0 ? product.stock : product.totalStock;
+    final targetSize = size ?? state.selectedSize;
+    return product.getStockForSize(targetSize.isNotEmpty ? targetSize : null);
   }
 
   Future<void> checkShipping(String pincode) async {

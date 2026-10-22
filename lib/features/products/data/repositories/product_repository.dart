@@ -16,7 +16,8 @@ class ProductRepository {
     final result = await _service.getProductById(id);
     return switch (result) {
       Success(data: final data) => () {
-          final p = ProductModel.fromJson(data['product'] ?? data);
+          final rawProduct = data is Map ? (data['product'] ?? data['data'] ?? data) : data;
+          final p = ProductModel.fromJson(rawProduct is Map<String, dynamic> ? rawProduct : Map<String, dynamic>.from(rawProduct as Map));
           AppLogger.d('[ProductRepository] [getProductById] Loaded: ${p.name}');
           return Success<ProductModel>(p);
         }(),
@@ -32,8 +33,20 @@ class ProductRepository {
     final result = await _service.getRelatedProducts(id);
     return switch (result) {
       Success(data: final data) => () {
-          final list = (data['products'] as List)
-              .map((e) => ProductModel.fromJson(e))
+          List<dynamic> rawList = [];
+          if (data is List) {
+            rawList = data;
+          } else if (data is Map) {
+            final products = data['products'];
+            final dataField = data['data'];
+            if (products is List) {
+              rawList = products;
+            } else if (dataField is List) {
+              rawList = dataField;
+            }
+          }
+          final list = rawList
+              .map((e) => ProductModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
               .toList();
           AppLogger.d('[ProductRepository] [getRelatedProducts] Found ${list.length} items');
           return Success<List<ProductModel>>(list);
@@ -52,7 +65,7 @@ class ProductRepository {
       Success(data: final data) => () {
           final rawList = data is List ? data : (data is Map ? (data['reviews'] ?? data['data'] ?? []) : []);
           final list = (rawList as List)
-              .map((e) => ReviewModel.fromJson(e))
+              .map((e) => ReviewModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
               .toList();
           AppLogger.d('[ProductRepository] [getProductReviews] Found ${list.length} reviews');
           return Success<List<ReviewModel>>(list);
@@ -71,7 +84,7 @@ class ProductRepository {
       Success(data: final data) => () {
           final rawList = data is List ? data : (data is Map ? (data['questions'] ?? data['data'] ?? []) : []);
           final list = (rawList as List)
-              .map((e) => QuestionModel.fromJson(e))
+              .map((e) => QuestionModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
               .toList();
           AppLogger.d('[ProductRepository] [getProductQuestions] Found ${list.length} questions');
           return Success<List<QuestionModel>>(list);
@@ -87,7 +100,7 @@ class ProductRepository {
     AppLogger.d('[ProductRepository] [verifyPurchase] Product: $productId');
     final result = await _service.verifyPurchase(productId);
     return switch (result) {
-      Success(data: final data) => Success<ReviewEligibilityModel>(ReviewEligibilityModel.fromJson(data)),
+      Success(data: final data) => Success<ReviewEligibilityModel>(ReviewEligibilityModel.fromJson(data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data as Map))),
       Failure(message: final m, statusCode: final s, exception: final e) =>
         Failure<ReviewEligibilityModel>(m, statusCode: s, exception: e),
     };
@@ -120,8 +133,9 @@ class ProductRepository {
     final result = await _service.getProducts(queryParameters: queryParameters);
     return switch (result) {
       Success(data: final data) => () {
-          final list = ((data['products'] ?? data['data'] ?? data) as List)
-              .map((e) => ProductModel.fromJson(e))
+          final rawList = data is List ? data : (data is Map ? (data['products'] ?? data['data'] ?? []) : []);
+          final list = (rawList as List)
+              .map((e) => ProductModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
               .toList();
           AppLogger.d('[ProductRepository] [getProducts] Found ${list.length} items');
           return Success<List<ProductModel>>(list);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../cart/presentation/providers/cart_notifier.dart';
 import '../../../wishlist/presentation/providers/wishlist_notifier.dart';
+import '../providers/header_notifier.dart';
 
 class AppBottomNavigation extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -29,7 +30,7 @@ class AppBottomNavigation extends ConsumerWidget {
       ),
       child: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) => _onTap(context, index),
+        onDestinationSelected: (index) => _onTap(context, ref, index),
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.home_outlined),
@@ -92,7 +93,10 @@ class AppBottomNavigation extends ConsumerWidget {
     );
   }
 
-  void _onTap(BuildContext context, int index) {
+  void _onTap(BuildContext context, WidgetRef ref, int index) {
+    if (ref.read(headerProvider).isSearchVisible) {
+      ref.read(headerProvider.notifier).setSearchVisible(false);
+    }
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,

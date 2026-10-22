@@ -37,7 +37,7 @@ class OrderHistoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +61,7 @@ class OrderHistoryCard extends StatelessWidget {
                         order.createdAt != null 
                             ? DateFormat('dd MMM yyyy').format(order.createdAt!)
                             : 'Date unavailable',
-                        style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.outline),
+                        style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -97,14 +97,14 @@ class OrderHistoryCard extends StatelessWidget {
                             ),
                             errorWidget: (context, url, error) => Container(
                               color: colorScheme.surfaceContainerHighest,
-                              child: Icon(Icons.image_outlined, color: colorScheme.outline),
+                              child: Icon(Icons.image_outlined, color: colorScheme.onSurfaceVariant),
                             ),
                           )
                         : Container(
                             width: 70,
                             height: 70,
                             color: colorScheme.surfaceContainerHighest,
-                            child: Icon(Icons.image_outlined, color: colorScheme.outline),
+                            child: Icon(Icons.image_outlined, color: colorScheme.onSurfaceVariant),
                           ),
                   ),
                   const SizedBox(width: 16),
@@ -121,7 +121,7 @@ class OrderHistoryCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${firstItem.selectedColor ?? "N/A"} • ${firstItem.selectedSize ?? "N/A"}',
-                          style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.outline),
+                          style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -154,20 +154,28 @@ class OrderHistoryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total Amount',
-                      style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.outline),
-                    ),
-                    Text(
-                      '₹${order.totalAmount.round()}',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Total Amount',
+                        style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '₹${order.totalAmount.round()}',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (onTrackTap != null && 
                         (order.status.toLowerCase() == 'shipped' || 
@@ -177,7 +185,7 @@ class OrderHistoryCard extends StatelessWidget {
                         child: const Text('Track Order'),
                       ),
                     const SizedBox(width: 4),
-                    Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
+                    Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant, size: 20),
                   ],
                 ),
               ],

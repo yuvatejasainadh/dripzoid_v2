@@ -44,7 +44,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
           height: widget.height ?? 56,
           child: FilledButton(
             onPressed: disabled ? null : widget.onPressed,
-            style: theme.filledButtonTheme.style?.copyWith(
+            style: (theme.filledButtonTheme.style ?? const ButtonStyle()).copyWith(
+              padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
               shape: widget.borderRadius != null 
                   ? WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(widget.borderRadius!)))
                   : null,
@@ -70,7 +71,13 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                           Icon(widget.icon, size: 20),
                           const SizedBox(width: 8),
                         ],
-                        Text(widget.text),
+                        Flexible(
+                          child: Text(
+                            widget.text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
             ),

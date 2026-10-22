@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 class HeaderSearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback onClear;
   final String initialValue;
 
   const HeaderSearchBar({
     super.key,
     required this.onChanged,
+    this.onSubmitted,
     required this.onClear,
     this.initialValue = '',
   });
@@ -23,6 +25,17 @@ class _HeaderSearchBarState extends State<HeaderSearchBar> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(HeaderSearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue && widget.initialValue != _controller.text) {
+      _controller.text = widget.initialValue;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),
+      );
+    }
   }
 
   @override
@@ -55,7 +68,14 @@ class _HeaderSearchBarState extends State<HeaderSearchBar> {
       child: TextField(
         controller: _controller,
         autofocus: true,
-        onChanged: widget.onChanged,
+        textInputAction: TextInputAction.search,
+        onChanged: (val) {
+          setState(() {});
+          widget.onChanged(val);
+        },
+        onSubmitted: (val) {
+          widget.onSubmitted?.call(val);
+        },
         textAlignVertical: TextAlignVertical.center,
         decoration: InputDecoration(
           hintText: 'Search for "Hoodie", "Vibe", "Oversized"...',

@@ -34,7 +34,7 @@ class OrderStatusBadge extends StatelessWidget {
       color = Colors.orange;
       icon = Icons.pending_actions_rounded;
     } else {
-      color = theme.colorScheme.outline;
+      color = theme.colorScheme.onSurfaceVariant;
       icon = Icons.info_outline_rounded;
     }
 

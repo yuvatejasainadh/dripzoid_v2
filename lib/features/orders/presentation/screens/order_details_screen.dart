@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../../../../core/ui/dialogs/premium_alert.dart';
@@ -22,17 +23,20 @@ class OrderDetailsScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: state.isLoading && state.order == null
-                  ? _buildLoadingState()
-                  : state.errorMessage != null && state.order == null
-                      ? _buildErrorState(state.errorMessage!)
-                      : _buildContent(context, ref, state),
-            ),
-          ],
+        child: ResponsiveContainer(
+          maxWidth: 900,
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: state.isLoading && state.order == null
+                    ? _buildLoadingState()
+                    : state.errorMessage != null && state.order == null
+                        ? _buildErrorState(state.errorMessage!)
+                        : _buildContent(context, ref, state),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -135,7 +139,8 @@ class OrderDetailsScreen extends ConsumerWidget {
                 label: const Text('Download Invoice'),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
-                  side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
+                  foregroundColor: colorScheme.primary,
+                  side: BorderSide(color: colorScheme.outlineVariant),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -169,7 +174,7 @@ class OrderDetailsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,9 +183,13 @@ class OrderDetailsScreen extends ConsumerWidget {
             children: [
               Icon(Icons.location_on_rounded, size: 18, color: colorScheme.primary),
               const SizedBox(width: 12),
-              Text(
-                address?.name ?? 'Customer Name',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Expanded(
+                child: Text(
+                  address?.name ?? 'Customer Name',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -204,11 +213,11 @@ class OrderDetailsScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.phone_rounded, size: 14, color: colorScheme.outline),
+              Icon(Icons.phone_rounded, size: 14, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
                 address?.phone ?? 'N/A',
-                style: TextStyle(color: colorScheme.outline),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -225,7 +234,7 @@ class OrderDetailsScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -244,6 +253,7 @@ class OrderDetailsScreen extends ConsumerWidget {
   Widget _buildPriceRow(BuildContext context, String label, double value,
       {bool isDiscount = false, bool isBold = false}) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     if (value == 0 && isDiscount) return const SizedBox.shrink();
 
     return Padding(
@@ -255,7 +265,7 @@ class OrderDetailsScreen extends ConsumerWidget {
             label,
             style: TextStyle(
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: isBold ? null : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: isBold ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
             ),
           ),
           Text(
@@ -263,7 +273,7 @@ class OrderDetailsScreen extends ConsumerWidget {
             style: TextStyle(
               fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
               fontSize: isBold ? 18.0 : null,
-              color: isDiscount ? Colors.green : theme.colorScheme.onSurface,
+              color: isDiscount ? Colors.green : colorScheme.onSurface,
             ),
           ),
         ],

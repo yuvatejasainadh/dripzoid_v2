@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
 import '../providers/order_history_notifier.dart';
 import '../widgets/order_filter_chips.dart';
@@ -27,64 +28,67 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => ref.read(orderHistoryProvider.notifier).fetchOrders(),
-                child: CustomScrollView(
-                  slivers: [
-                    if (state.isLoading && state.orders.isEmpty)
-                      _buildLoadingState()
-                    else if (state.errorMessage != null && state.orders.isEmpty)
-                      _buildErrorState(state.errorMessage!)
-                    else if (state.orders.isEmpty)
-                      _buildEmptyState(context)
-                    else ...[
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                      SliverToBoxAdapter(
-                        child: OrderSummaryWidget(
-                          total: state.totalCount,
-                          active: state.activeCount,
-                          cancelled: state.cancelledCount,
-                        ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: OrderFilterChips(
-                          selectedFilter: state.selectedFilter,
-                          onFilterChanged: (filter) =>
-                              ref.read(orderHistoryProvider.notifier).setFilter(filter),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final order = state.filteredOrders[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: OrderHistoryCard(
-                                  order: order,
-                                  onTap: () => context.push('/profile/order-details/${order.id}'),
-                                  onTrackTap: () => context.push('/profile/order-details/${order.id}'),
-                                ),
-                              );
-                            },
-                            childCount: state.filteredOrders.length,
+        child: ResponsiveContainer(
+          maxWidth: 900,
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => ref.read(orderHistoryProvider.notifier).fetchOrders(),
+                  child: CustomScrollView(
+                    slivers: [
+                      if (state.isLoading && state.orders.isEmpty)
+                        _buildLoadingState()
+                      else if (state.errorMessage != null && state.orders.isEmpty)
+                        _buildErrorState(state.errorMessage!)
+                      else if (state.orders.isEmpty)
+                        _buildEmptyState(context)
+                      else ...[
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                        SliverToBoxAdapter(
+                          child: OrderSummaryWidget(
+                            total: state.totalCount,
+                            active: state.activeCount,
+                            cancelled: state.cancelledCount,
                           ),
                         ),
-                      ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: OrderFilterChips(
+                            selectedFilter: state.selectedFilter,
+                            onFilterChanged: (filter) =>
+                                ref.read(orderHistoryProvider.notifier).setFilter(filter),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final order = state.filteredOrders[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: OrderHistoryCard(
+                                    order: order,
+                                    onTap: () => context.push('/profile/order-details/${order.id}'),
+                                    onTrackTap: () => context.push('/profile/order-details/${order.id}'),
+                                  ),
+                                );
+                              },
+                              childCount: state.filteredOrders.length,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SliverToBoxAdapter(child: SizedBox(height: 100)),
                     ],
-                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -130,6 +134,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   }
 
   Widget _buildErrorState(String message) {
+    final theme = Theme.of(context);
     return SliverFillRemaining(
       child: Center(
         child: Padding(
@@ -147,7 +152,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               const SizedBox(height: 12),
               Text(
                 message,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -172,13 +177,13 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_bag_outlined, size: 80, color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+            Icon(Icons.shopping_bag_outlined, size: 80, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
             const SizedBox(height: 24),
             const Text('No orders yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text(
               'Your future Dripzoid looks\nwill appear here.',
-              style: TextStyle(color: theme.colorScheme.outline),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),

@@ -12,6 +12,8 @@ class OrderFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final filters = ['All', 'Active', 'Delivered', 'Cancelled'];
 
     return SizedBox(
@@ -31,14 +33,15 @@ class OrderFilterChips extends StatelessWidget {
             onSelected: (_) => onFilterChanged(filter),
             showCheckmark: false,
             labelStyle: TextStyle(
-              color: isSelected ? Colors.black : null,
+              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
-            selectedColor: Colors.white,
+            selectedColor: colorScheme.primary,
+            backgroundColor: colorScheme.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
-                color: isSelected ? Colors.white : Colors.grey.withValues(alpha: 0.3),
+                color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
               ),
             ),
           );

@@ -91,10 +91,33 @@ class HomeRepository {
     final result = await _service.searchProducts(query);
     return switch (result) {
       Success(data: final data) => () {
-          final rawList = data is List ? data : (data is Map ? (data['products'] ?? data['data'] ?? []) : []);
-          final list = (rawList as List)
-              .map((e) => ProductModel.fromJson(e))
-              .toList();
+          List<dynamic> rawList = [];
+          if (data is List) {
+            rawList = data;
+          } else if (data is Map) {
+            for (final key in ['products', 'data', 'results', 'items']) {
+              final val = data[key];
+              if (val is List) {
+                rawList = val;
+                break;
+              }
+            }
+          }
+          final list = <ProductModel>[];
+          for (final item in rawList) {
+            try {
+              if (item is Map) {
+                final map = item is Map<String, dynamic>
+                    ? item
+                    : Map<String, dynamic>.from(item);
+                list.add(ProductModel.fromJson(map));
+              } else {
+                AppLogger.w('[HomeRepository] [searchProducts] Skipping non-map record: $item');
+              }
+            } catch (e, st) {
+              AppLogger.w('[HomeRepository] [searchProducts] Failed to parse product record: $item', error: e, stackTrace: st);
+            }
+          }
           AppLogger.i('[HomeRepository] [searchProducts] Found ${list.length} results');
           return Success<List<ProductModel>>(list);
         }(),

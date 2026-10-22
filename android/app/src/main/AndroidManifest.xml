@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="dripzoid_v2"
+        android:label="Dripzoid"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
