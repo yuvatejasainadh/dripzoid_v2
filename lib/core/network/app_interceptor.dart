@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../logging/app_logger.dart';
 import 'api_exception.dart';
 
@@ -11,10 +12,11 @@ class AppInterceptor extends Interceptor {
   ) {
     String message = "Something went wrong";
 
-    // Log specific handshake/SSL issues
-    if (err.error is HandshakeException || 
-        err.error is CertificateException || 
-        err.error is TlsException) {
+    // Log specific handshake/SSL issues (non-web only)
+    if (!kIsWeb &&
+        (err.error is HandshakeException ||
+         err.error is CertificateException ||
+         err.error is TlsException)) {
       AppLogger.e(
         "SSL/TLS Handshake Error detected in AppInterceptor\n"
         "Error: ${err.error}\n"

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import '../logging/app_logger.dart';
 import 'token_storage.dart';
@@ -20,7 +19,7 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) async {
-    // 1. Check for token in response body (primary for mobile)
+    // 1. Check for token in response body (primary for mobile and web)
     final data = response.data;
     if (data is Map<String, dynamic>) {
       final bodyToken = data['token'] ?? data['accessToken'];
@@ -31,14 +30,14 @@ class AuthInterceptor extends Interceptor {
     }
 
     // 2. Check for Set-Cookie header to extract token (fallback/redundancy)
-    final cookies = response.headers[HttpHeaders.setCookieHeader];
+    final cookies = response.headers['set-cookie'];
     if (cookies != null && cookies.isNotEmpty) {
       for (var cookie in cookies) {
         if (cookie.contains('token=')) {
           final start = cookie.indexOf('token=') + 6;
           final end = cookie.indexOf(';', start);
           final token = end == -1 ? cookie.substring(start) : cookie.substring(start, end);
-          
+
           if (token.isNotEmpty && token != 'deleted') {
             await _tokenStorage.saveToken(token);
             AppLogger.i('[AuthInterceptor] Token extracted from cookie and persisted');

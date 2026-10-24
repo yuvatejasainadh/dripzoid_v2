@@ -1,21 +1,27 @@
-import 'dart:io';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
-import 'package:cookie_jar/cookie_jar.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:path_provider/path_provider.dart';
+
 import '../config/app_config.dart';
 import '../logging/dio_logger_interceptor.dart';
+import 'app_interceptor.dart';
 import 'auth_interceptor.dart';
-import 'app_interceptor.dart'; 
 import 'token_storage.dart';
 
 class NetworkInitializer {
   static Future<Dio> initialize(AppConfig config) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final cookieJar = PersistCookieJar(
-      storage: FileStorage('${directory.path}/.cookies_main/'),
-    );
+    final CookieJar cookieJar;
+    if (kIsWeb) {
+      cookieJar = WebCookieJar();
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      cookieJar = PersistCookieJar(
+        storage: FileStorage('${directory.path}/.cookies_main/'),
+      );
+    }
 
     final tokenStorage = TokenStorage(const FlutterSecureStorage());
 
@@ -27,8 +33,8 @@ class NetworkInitializer {
         sendTimeout: config.connectionTimeout,
         responseType: ResponseType.json,
         contentType: Headers.jsonContentType,
-        headers: {
-          HttpHeaders.acceptHeader: "application/json",
+        headers: const {
+          'accept': 'application/json',
         },
       ),
     );
@@ -37,15 +43,20 @@ class NetworkInitializer {
     dio.interceptors.add(AuthInterceptor(tokenStorage));
     dio.interceptors.add(AppInterceptor());
     dio.interceptors.add(DioLoggerInterceptor());
-    
+
     return dio;
   }
 
   static Future<Dio> initializeAi(AppConfig config) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final cookieJar = PersistCookieJar(
-      storage: FileStorage('${directory.path}/.cookies_ai/'),
-    );
+    final CookieJar cookieJar;
+    if (kIsWeb) {
+      cookieJar = WebCookieJar();
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      cookieJar = PersistCookieJar(
+        storage: FileStorage('${directory.path}/.cookies_ai/'),
+      );
+    }
 
     final tokenStorage = TokenStorage(const FlutterSecureStorage());
 
@@ -57,8 +68,8 @@ class NetworkInitializer {
         sendTimeout: config.connectionTimeout,
         responseType: ResponseType.json,
         contentType: Headers.jsonContentType,
-        headers: {
-          HttpHeaders.acceptHeader: "application/json",
+        headers: const {
+          'accept': 'application/json',
         },
       ),
     );

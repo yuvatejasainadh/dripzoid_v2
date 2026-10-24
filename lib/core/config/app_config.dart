@@ -45,4 +45,18 @@ class AppConfig {
     razorpayKey: const String.fromEnvironment('RAZORPAY_KEY', defaultValue: ''),
     googleWebClientId: "83358271931-jt696gs2pb1bqssq2fer32n2ou7gjaoi.apps.googleusercontent.com",
   );
+
+  static AppConfig get current {
+    const env = String.fromEnvironment('APP_ENV', defaultValue: 'production');
+    switch (env.toLowerCase()) {
+      case 'development':
+      case 'dev':
+        return dev;
+      case 'staging':
+        return staging;
+      case 'production':
+      default:
+        return production;
+    }
+  }
 }
