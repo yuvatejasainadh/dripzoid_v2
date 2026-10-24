@@ -258,9 +258,19 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repository.checkEmail(email);
-      state = state.copyWith(isLoading: false);
-      if (result is Success<bool>) return result.data;
-      if (result is Failure<bool>) state = state.copyWith(errorMessage: result.message);
+      if (result is Success<bool>) {
+        state = state.copyWith(isLoading: false);
+        return result.data;
+      }
+      if (result is Failure<bool>) {
+        state = state.copyWith(isLoading: false, errorMessage: result.message);
+      }
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll(RegExp(r'^Exception:\s*'), ''),
+      );
       return false;
     } finally {
       state = state.copyWith(isLoading: false);
@@ -271,9 +281,16 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repository.sendOTP(email);
-      state = state.copyWith(isLoading: false);
-      if (result is Failure<void>) state = state.copyWith(errorMessage: result.message);
+      if (result is Failure<void>) {
+        state = state.copyWith(isLoading: false, errorMessage: result.message);
+      }
       return result is Success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll(RegExp(r'^Exception:\s*'), ''),
+      );
+      return false;
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -283,9 +300,16 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repository.verifyOTP(email, otp);
-      state = state.copyWith(isLoading: false);
-      if (result is Failure<void>) state = state.copyWith(errorMessage: result.message);
+      if (result is Failure<void>) {
+        state = state.copyWith(isLoading: false, errorMessage: result.message);
+      }
       return result is Success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll(RegExp(r'^Exception:\s*'), ''),
+      );
+      return false;
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -295,9 +319,16 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repository.resetPassword(email: email, password: password);
-      state = state.copyWith(isLoading: false);
-      if (result is Failure<void>) state = state.copyWith(errorMessage: result.message);
+      if (result is Failure<void>) {
+        state = state.copyWith(isLoading: false, errorMessage: result.message);
+      }
       return result is Success;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll(RegExp(r'^Exception:\s*'), ''),
+      );
+      return false;
     } finally {
       state = state.copyWith(isLoading: false);
     }

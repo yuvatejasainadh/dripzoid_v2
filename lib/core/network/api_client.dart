@@ -161,15 +161,37 @@ class ApiClient {
         return Failure(
           error.message,
           statusCode: error.statusCode,
+          errorType: error.type,
           exception: e,
           stackTrace: e.stackTrace,
           endpoint: path,
         );
       }
+
+      final statusCode = e.response?.statusCode;
+      ApiErrorType derivedType = ApiErrorType.unknown;
+      if (statusCode != null) {
+        if (statusCode == 401 || statusCode == 403) {
+          derivedType = ApiErrorType.authentication;
+        } else if (statusCode == 422 || statusCode == 400) {
+          derivedType = ApiErrorType.validation;
+        } else if (statusCode == 429) {
+          derivedType = ApiErrorType.rateLimit;
+        } else if (statusCode >= 500) {
+          derivedType = ApiErrorType.serverError;
+        }
+      } else if (e.type == DioExceptionType.connectionError) {
+        derivedType = ApiErrorType.networkUnavailable;
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.sendTimeout ||
+                 e.type == DioExceptionType.receiveTimeout) {
+        derivedType = ApiErrorType.timeout;
+      }
       
       return Failure(
         message,
-        statusCode: e.response?.statusCode,
+        statusCode: statusCode,
+        errorType: derivedType,
         exception: e,
         stackTrace: e.stackTrace,
         endpoint: path,

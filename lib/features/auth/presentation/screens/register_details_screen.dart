@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/ui/snackbars/premium_snackbar.dart';
+import '../../../../core/ui/dialogs/app_error_dialog.dart';
 import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/password_field.dart';
@@ -48,184 +48,171 @@ class _RegisterDetailsScreenState
   }
 
   Future<void> register() async {
+    if (loading) return; // Prevent duplicate submissions
     if (!_formKey.currentState!.validate()) return;
 
     if (gender.isEmpty) {
-      PremiumSnackbar.showError(context, "Please select gender");
+      AppErrorDialog.showForError(context, error: "Please select gender");
       return;
     }
 
     if (dob == null) {
-      PremiumSnackbar.showError(context, "Please select date of birth");
+      AppErrorDialog.showForError(context, error: "Please select date of birth");
       return;
     }
 
     if (passwordController.text != confirmPasswordController.text) {
-      PremiumSnackbar.showError(context, "Passwords do not match");
+      AppErrorDialog.showForError(context, error: "Passwords do not match");
       return;
     }
 
-    final success = await ref.read(authProvider.notifier).register({
-      "name": nameController.text.trim(),
-      "email": widget.email,
-      "phone": phoneController.text.trim(),
-      "mobile": phoneController.text.trim(),
-      "gender": gender,
-      "dob": dob!.toIso8601String(),
-      "password": passwordController.text,
-    });
+    setState(() => loading = true);
 
-    if (!mounted) return;
-
-    if (success) {
-      context.go('/home');
-    } else {
-      final error = ref.read(authProvider).errorMessage;
-      PremiumSnackbar.showError(context, error ?? "Registration failed");
-    }
-  }
-
-  Future<void> pickDate() async {
-    final selected = await showDatePicker(
-      context: context,
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-      initialDate: DateTime(2000),
-    );
-
-    if (!mounted) return;
-
-    if (selected != null) {
-      setState(() {
-        dob = selected;
+    try {
+      final success = await ref.read(authProvider.notifier).register({
+        "name": nameController.text.trim(),
+        "email": widget.email,
+        "phone": phoneController.text.trim(),
+        "password": passwordController.text,
+        "gender": gender,
+        "dateOfBirth": dob?.toIso8601String(),
       });
+
+      if (!mounted) return;
+
+      if (success) {
+        context.go('/home');
+      } else {
+        final error = ref.read(authProvider).errorMessage;
+        AppErrorDialog.showForError(
+          context,
+          error: error ?? "Registration failed. Please check your connection and try again.",
+          onRetry: () => register(),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(title: const Text("Complete Profile")),
       body: SafeArea(
-        child: ResponsiveContainer(
-          maxWidth: LayoutUtils.maxFormWidth,
+        child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  AppTextField(
-                    controller: nameController,
-                    hintText: "Full Name",
-                    prefixIcon: const Icon(Icons.person_outline),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return "Required";
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  AppTextField(
-                    controller: emailController,
-                    hintText: "Email",
-                    label: "Email",
-                    enabled: false,
-                    prefixIcon: const Icon(Icons.email_outlined),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  AppTextField(
-                    controller: phoneController,
-                    hintText: "Phone Number",
-                    label: "Phone",
-                    keyboardType: TextInputType.phone,
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return "Required";
-                      }
-
-                      if (value.length != 10) {
-                        return "Invalid phone number";
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  DropdownButtonFormField<String>(
-                    initialValue: gender.isEmpty ? null : gender,
-                    decoration: const InputDecoration(
-                      labelText: "Gender",
-                      border: OutlineInputBorder(),
+            child: ResponsiveContainer(
+              maxWidth: LayoutUtils.maxFormWidth,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    AppTextField(
+                      controller: nameController,
+                      hintText: "Full Name",
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                              ? "Name is required"
+                              : null,
                     ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: "male",
-                        child: Text("Male"),
-                      ),
-                      DropdownMenuItem(
-                        value: "female",
-                        child: Text("Female"),
-                      ),
-                      DropdownMenuItem(
-                        value: "other",
-                        child: Text("Other"),
-                      ),
-                      DropdownMenuItem(
-                        value: "prefer_not_to_say",
-                        child: Text("Prefer not to say"),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        gender = value ?? "";
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      dob == null
-                          ? "Select Date of Birth"
-                          : "${dob!.day}/${dob!.month}/${dob!.year}",
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      controller: emailController,
+                      hintText: "Email",
+                      enabled: false,
                     ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: pickDate,
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  PasswordField(
-                    controller: passwordController,
-                    hintText: "Password",
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  PasswordField(
-                    controller: confirmPasswordController,
-                    hintText: "Confirm Password",
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  PrimaryButton(
-                    text: "Create Account",
-                    loading: loading,
-                    onPressed: register,
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    AppTextField(
+                      controller: phoneController,
+                      hintText: "Phone Number",
+                      keyboardType: TextInputType.phone,
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                              ? "Phone is required"
+                              : null,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: "Gender",
+                        border: OutlineInputBorder(),
+                      ),
+                      initialValue: gender.isEmpty ? null : gender,
+                      items: const [
+                        DropdownMenuItem(value: "male", child: Text("Male")),
+                        DropdownMenuItem(value: "female", child: Text("Female")),
+                        DropdownMenuItem(value: "other", child: Text("Other")),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          gender = val ?? "";
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      title: Text(
+                        dob == null
+                            ? "Select Date of Birth"
+                            : "${dob!.day}/${dob!.month}/${dob!.year}",
+                      ),
+                      trailing: const Icon(Icons.calendar_today_outlined),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime(2000),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            dob = picked;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    PasswordField(
+                      controller: passwordController,
+                      hintText: "Password",
+                      validator: (val) {
+                        if (val == null || val.length < 6) {
+                          return "Min 6 characters";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    PasswordField(
+                      controller: confirmPasswordController,
+                      hintText: "Confirm Password",
+                      validator: (val) {
+                        if (val == null || val.isEmpty) {
+                          return "Confirm your password";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    PrimaryButton(
+                      text: "Register",
+                      loading: loading,
+                      onPressed: register,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/ui/dialogs/app_error_dialog.dart';
 import '../../../../core/ui/snackbars/premium_snackbar.dart';
 import '../../../../shared/widgets/password_field.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -22,7 +23,6 @@ class _ResetPasswordScreenState
   final formKey = GlobalKey<FormState>();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  bool loading = false;
 
   @override
   void dispose() {
@@ -32,10 +32,11 @@ class _ResetPasswordScreenState
   }
 
   Future<void> resetPassword() async {
+    if (ref.read(authProvider).isLoading) return; // Prevent duplicate submissions
     if (!formKey.currentState!.validate()) return;
 
     if (passwordController.text != confirmPasswordController.text) {
-      PremiumSnackbar.showError(context, "Passwords do not match");
+      AppErrorDialog.showForError(context, error: "Passwords do not match");
       return;
     }
 
@@ -51,89 +52,63 @@ class _ResetPasswordScreenState
       context.go('/login');
     } else {
       final error = ref.read(authProvider).errorMessage;
-      PremiumSnackbar.showError(context, error ?? "Password reset failed");
+      AppErrorDialog.showForError(
+        context,
+        error: error ?? "Password reset failed. Please check your connection and try again.",
+        onRetry: () => resetPassword(),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(),
-
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding:
-            const EdgeInsets.all(24),
-
+            padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints:
-              const BoxConstraints(
+              constraints: const BoxConstraints(
                 maxWidth: 420,
               ),
-
               child: Form(
                 key: formKey,
-
                 child: Column(
                   children: [
-
                     const AuthHeader(
-                      title:
-                      "Reset Password",
-                      subtitle:
-                      "Create your new password",
+                      title: "Reset Password",
+                      subtitle: "Enter your new password.",
                     ),
-
-                    const SizedBox(
-                        height: 40),
-
+                    const SizedBox(height: 40),
                     PasswordField(
-                      controller:
-                      passwordController,
-                      hintText:
-                      "New Password",
-                      validator: (v) {
-                        if (v == null ||
-                            v.isEmpty) {
-                          return "Required";
+                      controller: passwordController,
+                      hintText: "New Password",
+                      validator: (value) {
+                        if (value == null || value.length < 6) {
+                          return "Min 6 characters required";
                         }
-
-                        if (v.length < 8) {
-                          return "Minimum 8 characters";
-                        }
-
                         return null;
                       },
                     ),
-
-                    const SizedBox(
-                        height: 18),
-
+                    const SizedBox(height: 16),
                     PasswordField(
-                      controller:
-                      confirmPasswordController,
-                      hintText:
-                      "Confirm Password",
-                      validator: (v) {
-                        if (v == null ||
-                            v.isEmpty) {
-                          return "Required";
+                      controller: confirmPasswordController,
+                      hintText: "Confirm Password",
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Confirm your password";
                         }
-
                         return null;
                       },
                     ),
-
-                    const SizedBox(
-                        height: 32),
-
+                    const SizedBox(height: 32),
                     PrimaryButton(
-                      text:
-                      "Update Password",
-                      loading: loading,
-                      onPressed:
-                      resetPassword,
+                      text: "Reset Password",
+                      loading: state.isLoading,
+                      onPressed: resetPassword,
                     ),
                   ],
                 ),

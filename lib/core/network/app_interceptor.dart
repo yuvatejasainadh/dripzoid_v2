@@ -11,6 +11,7 @@ class AppInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) {
     String message = "Something went wrong";
+    ApiErrorType errorType = ApiErrorType.unknown;
 
     // Log specific handshake/SSL issues (non-web only)
     if (!kIsWeb &&
@@ -29,33 +30,69 @@ class AppInterceptor extends Interceptor {
 
     switch (err.type) {
       case DioExceptionType.connectionTimeout:
-        message = "Connection timeout";
-        break;
-
+      case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        message = "Server timeout";
+        errorType = ApiErrorType.timeout;
+        message = "The request took too long. Please try again.";
         break;
 
       case DioExceptionType.connectionError:
-        message = "No internet connection";
+        errorType = ApiErrorType.networkUnavailable;
+        message = "We couldn't connect to Dripzoid. Check your connection and try again.";
         break;
 
       case DioExceptionType.badResponse:
+        final statusCode = err.response?.statusCode;
         final data = err.response?.data;
+        String? serverMsg;
 
         if (data is Map<String, dynamic>) {
-          message = data["message"]?.toString() ?? 
-                    data["error"]?.toString() ??
-                    data["detail"]?.toString() ?? 
-                    "Server Error (${err.response?.statusCode})";
-        } else {
-          message = "Server Error (${err.response?.statusCode})";
+          serverMsg = data["message"]?.toString() ??
+                      data["error"]?.toString() ??
+                      data["detail"]?.toString();
+        } else if (data is String && data.isNotEmpty) {
+          serverMsg = data;
         }
+
+        if (statusCode != null) {
+          if (statusCode == 401 || statusCode == 403) {
+            errorType = ApiErrorType.authentication;
+            message = serverMsg ?? (statusCode == 401 ? "Invalid email or password" : "Your session has expired. Please sign in again.");
+          } else if (statusCode == 422 || statusCode == 400) {
+            errorType = ApiErrorType.validation;
+            message = serverMsg ?? "Validation error occurred";
+          } else if (statusCode == 429) {
+            errorType = ApiErrorType.rateLimit;
+            message = serverMsg ?? "Too many requests. Please try again later.";
+          } else if (statusCode >= 500) {
+            if (serverMsg != null && serverMsg.toUpperCase().contains("CORS")) {
+              errorType = ApiErrorType.corsOrBlocked;
+              message = "We couldn't connect to Dripzoid. Check your connection and try again.";
+            } else {
+              errorType = ApiErrorType.serverError;
+              message = serverMsg ?? "Service Temporarily Unavailable";
+            }
+          } else {
+            message = serverMsg ?? "Request failed ($statusCode)";
+          }
+        } else {
+          message = serverMsg ?? message;
+        }
+        break;
+
+      case DioExceptionType.cancel:
+        message = "Request cancelled";
         break;
 
       default:
         if (err.type == DioExceptionType.unknown) {
-          message = err.error?.toString() ?? err.message ?? "Unknown error occurred";
+          final errStr = err.error?.toString() ?? err.message ?? "Unknown error occurred";
+          if (errStr.contains("Failed to fetch") || errStr.contains("XMLHttpRequest error")) {
+            errorType = ApiErrorType.networkUnavailable;
+            message = "We couldn't connect to Dripzoid. Check your connection and try again.";
+          } else {
+            message = errStr;
+          }
         } else {
           message = err.message ?? message;
         }
@@ -69,6 +106,7 @@ class AppInterceptor extends Interceptor {
         error: ApiException(
           message,
           statusCode: err.response?.statusCode,
+          type: errorType,
         ),
       ),
     );

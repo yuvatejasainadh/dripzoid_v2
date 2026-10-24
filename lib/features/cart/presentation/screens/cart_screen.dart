@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/ui/dialogs/app_error_dialog.dart';
 import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
@@ -82,14 +83,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage &&
           next.items.isNotEmpty) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppErrorDialog.showForError(context, error: next.errorMessage!);
       }
     });
 

@@ -103,7 +103,11 @@ class CartNotifier extends Notifier<CartState> {
         state = state.copyWith(isLoading: false, errorMessage: (result as Failure).message);
         return false;
       }
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      return false;
     } finally {
+      state = state.copyWith(isLoading: false);
       _pendingCartItemIds.remove(opKey);
     }
   }

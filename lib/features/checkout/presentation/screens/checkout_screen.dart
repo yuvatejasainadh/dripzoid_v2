@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/tokens/app_colors.dart';
-import '../../../../core/ui/snackbars/premium_snackbar.dart';
+import '../../../../core/ui/dialogs/app_error_dialog.dart';
 import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/shimmer_loading.dart';
@@ -59,7 +59,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         context.go('/order-success', extra: order);
       }
       if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
-        PremiumSnackbar.showError(context, next.errorMessage!);
+        AppErrorDialog.showForError(context, error: next.errorMessage!);
       }
     });
 

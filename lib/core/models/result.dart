@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../network/api_exception.dart';
 
 sealed class Result<T> extends Equatable {
   const Result();
@@ -18,6 +19,7 @@ class Success<T> extends Result<T> {
 class Failure<T> extends Result<T> {
   final String message;
   final int? statusCode;
+  final ApiErrorType errorType;
   final dynamic exception;
   final StackTrace? stackTrace;
   final String? endpoint;
@@ -25,11 +27,12 @@ class Failure<T> extends Result<T> {
   const Failure(
     this.message, {
     this.statusCode,
+    this.errorType = ApiErrorType.unknown,
     this.exception,
     this.stackTrace,
     this.endpoint,
   });
 
   @override
-  List<Object?> get props => [message, statusCode, exception, stackTrace, endpoint];
+  List<Object?> get props => [message, statusCode, errorType, exception, stackTrace, endpoint];
 }

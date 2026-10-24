@@ -107,12 +107,18 @@ class WishlistNotifier extends Notifier<WishlistState> {
   }
 
   Future<void> moveToCart(List<String> productIds) async {
-    state = state.copyWith(isLoading: true);
-    final result = await _repository.moveToCart(productIds);
-    if (result is Success) {
-      await fetchWishlist();
-    } else {
-      state = state.copyWith(isLoading: false, errorMessage: (result as Failure).message);
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final result = await _repository.moveToCart(productIds);
+      if (result is Success) {
+        await fetchWishlist();
+      } else {
+        state = state.copyWith(isLoading: false, errorMessage: (result as Failure).message);
+      }
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 }
