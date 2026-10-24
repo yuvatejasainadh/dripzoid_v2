@@ -109,6 +109,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final isShortScreen = screenHeight < 500;
+    final logoSize = isShortScreen ? 110.0 : 190.0;
+    final centerOffset = isShortScreen ? const Offset(0, -15) : const Offset(0, -30);
+    final textOffset = isShortScreen ? const Offset(0, -30) : const Offset(0, -55);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -121,14 +126,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               children: [
                 Center(
                   child: Transform.translate(
-                    offset: const Offset(0, -30),
+                    offset: centerOffset,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const AppLogo(size: 190),
+                        AppLogo(size: logoSize),
 
                         Transform.translate(
-                          offset: const Offset(0, -55),
+                          offset: textOffset,
                           child: Column(
                             children: [
                               Text(
@@ -153,7 +158,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
 
-                _buildBottomSection(context, textTheme),
+                _buildBottomSection(context, textTheme, isShortScreen: isShortScreen),
               ],
             ),
           ),
@@ -162,14 +167,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
   }
 
-  Widget _buildBottomSection(BuildContext context, TextTheme textTheme) {
+  Widget _buildBottomSection(BuildContext context, TextTheme textTheme, {bool isShortScreen = false}) {
     final theme = Theme.of(context);
+    final bottomOffset = isShortScreen ? 8.0 : 20.0;
+    final itemSpacing = isShortScreen ? 10.0 : 24.0;
 
     if (_hasError) {
       return Positioned(
         left: 24,
         right: 24,
-        bottom: 20,
+        bottom: bottomOffset,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -180,7 +187,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 color: theme.colorScheme.error,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isShortScreen ? 8.0 : 16.0),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 12,
@@ -210,7 +217,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: itemSpacing),
             const ProductAttribution(),
           ],
         ),
@@ -220,17 +227,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return Positioned(
       left: 0,
       right: 0,
-      bottom: 20,
+      bottom: bottomOffset,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const AppLoader(),
-          const SizedBox(height: 14),
+          SizedBox(height: isShortScreen ? 8.0 : 14.0),
           Text(
             "Initializing...",
             style: textTheme.bodyMedium,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: itemSpacing),
           const ProductAttribution(),
         ],
       ),

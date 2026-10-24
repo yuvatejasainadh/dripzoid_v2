@@ -26,6 +26,7 @@ import '../../features/auth/presentation/screens/profile_screen.dart';
 import '../../features/auth/presentation/screens/edit_profile_screen.dart';
 import '../../features/auth/presentation/screens/security_screen.dart';
 import '../../features/auth/presentation/screens/about_screen.dart';
+import '../../features/auth/presentation/screens/privacy_policy_screen.dart';
 import '../../features/address/presentation/screens/address_list_screen.dart';
 import '../../features/address/presentation/screens/address_form_screen.dart';
 import '../../features/address/data/models/address_model.dart';
@@ -204,6 +205,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   builder: (context, state) => const AboutScreen(),
                 ),
                 GoRoute(
+                  path: 'privacy-policy',
+                  builder: (context, state) => const PrivacyPolicyScreen(),
+                ),
+                GoRoute(
                   path: 'addresses',
                   builder: (context, state) => const AddressListScreen(),
                   routes: [
@@ -228,6 +233,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
 
     // Full-screen routes (outside shell if needed, or keeping them simple)
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/privacy-policy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
+
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/shop',

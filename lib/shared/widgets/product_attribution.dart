@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 /// A minimal product attribution widget attributing Dripzoid to SAI Labs.
 ///
-/// Uses [assets/logos/sailabs_logo-dark.png] with a subtle dark container treatment
-/// ensuring crisp contrast and legibility across both light and dark themes.
+/// Features a compact, refined bottom banner displaying "A Product of" and the
+/// SAI Labs logo with a dark container treatment, ensuring crisp contrast and
+/// legibility across both light and dark themes.
 class ProductAttribution extends StatelessWidget {
   final bool showBrandText;
-  const ProductAttribution({super.key, this.showBrandText = true});
+  const ProductAttribution({super.key, this.showBrandText = false});
 
   static const String logoAsset = 'assets/logos/sailabs_logo-dark.png';
 
@@ -17,7 +18,7 @@ class ProductAttribution extends StatelessWidget {
 
     return Center(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF141414) : const Color(0xFF121212),
           borderRadius: BorderRadius.circular(12),
@@ -42,23 +43,10 @@ class ProductAttribution extends StatelessWidget {
             const SizedBox(height: 6),
             Image.asset(
               logoAsset,
-              height: 20,
+              height: 28,
               fit: BoxFit.contain,
               filterQuality: FilterQuality.medium,
             ),
-            if (showBrandText) ...[
-              const SizedBox(height: 6),
-              Text(
-                'SAI Labs — Sainadh Advanced Intelligence Labs',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ],
         ),
       ),

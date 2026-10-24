@@ -21,7 +21,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('ProductAttribution Widget Tests', () {
-    testWidgets('renders "A Product of" text and SAI Labs dark logo asset', (tester) async {
+    testWidgets('renders "A Product of" text and SAI Labs dark logo asset without long org name', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -34,7 +34,10 @@ void main() {
       // Verify "A Product of" text
       expect(find.text('A Product of'), findsOneWidget);
 
-      // Verify Image widget with specified asset
+      // Verify long organization name is removed
+      expect(find.text('SAI Labs — Sainadh Advanced Intelligence Labs'), findsNothing);
+
+      // Verify Image widget with specified asset and dimensions
       final imageFinder = find.byType(Image);
       expect(imageFinder, findsOneWidget);
 
@@ -43,8 +46,9 @@ void main() {
       final assetImage = imageWidget.image as AssetImage;
       expect(assetImage.assetName, equals('assets/logos/sailabs_logo-dark.png'));
 
-      // Verify aspect ratio preservation
+      // Verify aspect ratio preservation and enlarged height
       expect(imageWidget.fit, equals(BoxFit.contain));
+      expect(imageWidget.height, equals(28));
     });
 
     testWidgets('renders correctly in dark mode', (tester) async {
@@ -59,6 +63,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('A Product of'), findsOneWidget);
+      expect(find.text('SAI Labs — Sainadh Advanced Intelligence Labs'), findsNothing);
       expect(find.byType(Image), findsOneWidget);
     });
 
@@ -74,6 +79,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('A Product of'), findsOneWidget);
+      expect(find.text('SAI Labs — Sainadh Advanced Intelligence Labs'), findsNothing);
       expect(find.byType(Image), findsOneWidget);
     });
   });
@@ -89,8 +95,9 @@ void main() {
 
       expect(find.byType(ProductAttribution), findsOneWidget);
       expect(find.text('A Product of'), findsOneWidget);
+      expect(find.text('SAI Labs — Sainadh Advanced Intelligence Labs'), findsNothing);
       expect(find.text('About Dripzoid'), findsOneWidget);
-      expect(find.text('Dripzoid'), findsOneWidget);
+      expect(find.text('DRIPZOID'), findsOneWidget);
     });
   });
 
@@ -118,6 +125,7 @@ void main() {
       // Verify SAI Labs ProductAttribution is present
       expect(find.byType(ProductAttribution), findsOneWidget);
       expect(find.text('A Product of'), findsOneWidget);
+      expect(find.text('SAI Labs — Sainadh Advanced Intelligence Labs'), findsNothing);
 
       // Verify the image inside ProductAttribution
       final imageFinder = find.descendant(

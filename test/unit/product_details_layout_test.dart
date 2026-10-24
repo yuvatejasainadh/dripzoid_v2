@@ -11,6 +11,7 @@ import 'package:dripzoid_v2/features/products/presentation/screens/product_detai
 import 'package:dripzoid_v2/features/products/data/repositories/product_repository.dart';
 import 'package:dripzoid_v2/features/products/presentation/providers/product_providers.dart';
 import 'package:dripzoid_v2/features/products/presentation/widgets/product_purchase_bar.dart';
+import 'package:dripzoid_v2/shared/widgets/shimmer_loading.dart';
 
 class MockProductRepository implements ProductRepository {
   final ProductModel? product;
@@ -165,11 +166,11 @@ void main() {
 
       // During loading
       await tester.pump();
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(ProductDetailsSkeleton), findsOneWidget);
       expect(find.byType(BackButton), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(ProductDetailsSkeleton), findsNothing);
       expect(find.text('Oversized Vintage Acid Wash Tee'), findsAtLeast(1));
     });
 

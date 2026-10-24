@@ -123,10 +123,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       padding: const EdgeInsets.all(16),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, index) => const Padding(
-            padding: EdgeInsets.only(bottom: 16),
-            child: ShimmerWidget.rectangular(height: 180),
-          ),
+          (context, index) => const OrderHistoryCardSkeleton(),
           childCount: 3,
         ),
       ),
@@ -136,6 +133,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   Widget _buildErrorState(String message) {
     final theme = Theme.of(context);
     return SliverFillRemaining(
+      hasScrollBody: false,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -173,6 +171,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     return SliverFillRemaining(
+      hasScrollBody: false,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

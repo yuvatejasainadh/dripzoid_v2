@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/models/address_model.dart';
@@ -89,82 +90,85 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       appBar: AppBar(
         title: Text(widget.address == null ? 'Add Address' : 'Edit Address'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              AppTextField(
-                controller: _labelController,
-                hintText: 'Address Label (e.g., Home, Work)',
-                validator: (v) => v!.isEmpty ? 'Label required' : null,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _nameController,
-                hintText: 'Recipient Name',
-                validator: (v) => v!.isEmpty ? 'Name required' : null,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _phoneController,
-                hintText: 'Phone Number',
-                keyboardType: TextInputType.phone,
-                validator: (v) => v!.isEmpty ? 'Phone required' : null,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _line1Controller,
-                hintText: 'Address Line 1',
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _line2Controller,
-                hintText: 'Address Line 2 (Optional)',
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      controller: _cityController,
-                      hintText: 'City',
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+      body: ResponsiveContainer(
+        maxWidth: 600,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                AppTextField(
+                  controller: _labelController,
+                  hintText: 'Address Label (e.g., Home, Work)',
+                  validator: (v) => v!.isEmpty ? 'Label required' : null,
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _nameController,
+                  hintText: 'Recipient Name',
+                  validator: (v) => v!.isEmpty ? 'Name required' : null,
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _phoneController,
+                  hintText: 'Phone Number',
+                  keyboardType: TextInputType.phone,
+                  validator: (v) => v!.isEmpty ? 'Phone required' : null,
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _line1Controller,
+                  hintText: 'Address Line 1',
+                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _line2Controller,
+                  hintText: 'Address Line 2 (Optional)',
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        controller: _cityController,
+                        hintText: 'City',
+                        validator: (v) => v!.isEmpty ? 'Required' : null,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: AppTextField(
-                      controller: _stateController,
-                      hintText: 'State',
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: AppTextField(
+                        controller: _stateController,
+                        hintText: 'State',
+                        validator: (v) => v!.isEmpty ? 'Required' : null,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: _pincodeController,
-                hintText: 'Pincode',
-                keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              SwitchListTile(
-                title: Text('Set as Default Address', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
-                value: _isDefault,
-                onChanged: (val) => setState(() => _isDefault = val),
-                activeTrackColor: theme.colorScheme.primary,
-              ),
-              const SizedBox(height: 32),
-              PrimaryButton(
-                onPressed: _submit,
-                loading: addressState.isLoading,
-                text: widget.address == null ? 'Save Address' : 'Update Address',
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  controller: _pincodeController,
+                  hintText: 'Pincode',
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: Text('Set as Default Address', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  value: _isDefault,
+                  onChanged: (val) => setState(() => _isDefault = val),
+                  activeTrackColor: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 32),
+                PrimaryButton(
+                  onPressed: _submit,
+                  loading: addressState.isLoading,
+                  text: widget.address == null ? 'Save Address' : 'Update Address',
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -92,6 +92,8 @@ class CategoryCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               _displayLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,

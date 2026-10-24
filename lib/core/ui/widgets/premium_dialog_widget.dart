@@ -134,9 +134,13 @@ class PremiumDialogWidget extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: AppShapes.radius12),
             elevation: 0,
           ),
-          child: Text(
-            primaryActionText ?? 'Done',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              primaryActionText ?? 'Done',
+              maxLines: 1,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       );
@@ -151,11 +155,15 @@ class PremiumDialogWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: AppShapes.radius12),
             ),
-            child: Text(
-              secondaryActionText!,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w600,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                secondaryActionText!,
+                maxLines: 1,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -171,9 +179,13 @@ class PremiumDialogWidget extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: AppShapes.radius12),
               elevation: 0,
             ),
-            child: Text(
-              primaryActionText ?? 'Confirm',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                primaryActionText ?? 'Confirm',
+                maxLines: 1,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ),

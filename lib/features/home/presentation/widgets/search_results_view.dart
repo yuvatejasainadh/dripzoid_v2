@@ -134,17 +134,10 @@ class SearchResultsView extends ConsumerWidget {
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      sliver: SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          childAspectRatio: LayoutUtils.getProductGridRatio(context),
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => const ShimmerWidget.rectangular(height: 250),
-          childCount: columns * 2,
-        ),
+      sliver: SliverProductGridSkeleton(
+        columns: columns,
+        itemCount: columns * 2,
+        spacing: AppSpacing.md,
       ),
     );
   }
@@ -247,11 +240,15 @@ class SearchResultsView extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Found ${state.results.length} ${state.results.length == 1 ? "result" : "results"} for "${state.query}"',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+              Expanded(
+                child: Text(
+                  'Found ${state.results.length} ${state.results.length == 1 ? "result" : "results"} for "${state.query}"',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

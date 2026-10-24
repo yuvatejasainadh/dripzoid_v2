@@ -166,9 +166,13 @@ class _SliverProductGrid extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -179,17 +183,9 @@ class _SliverProductGrid extends StatelessWidget {
             ),
           ),
           if (isLoading)
-            SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                childAspectRatio: LayoutUtils.getProductGridRatio(context),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => const ShimmerWidget.rectangular(height: 250),
-                childCount: columns * 2,
-              ),
+            SliverProductGridSkeleton(
+              columns: columns,
+              itemCount: columns * 2,
             )
           else
             SliverGrid(
@@ -244,7 +240,10 @@ class _SliverTrendingSection extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     itemCount: 3,
                     separatorBuilder: (context, index) => const SizedBox(width: 16),
-                    itemBuilder: (context, index) => const ShimmerWidget.rectangular(width: 200, height: 380),
+                    itemBuilder: (context, index) => const SizedBox(
+                      width: 200,
+                      child: ProductCardSkeleton(),
+                    ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

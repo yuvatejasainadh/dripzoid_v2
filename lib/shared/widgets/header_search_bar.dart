@@ -50,6 +50,7 @@ class _HeaderSearchBarState extends State<HeaderSearchBar> {
 
     return Container(
       height: 52,
+      alignment: Alignment.center,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -78,6 +79,7 @@ class _HeaderSearchBarState extends State<HeaderSearchBar> {
         },
         textAlignVertical: TextAlignVertical.center,
         decoration: InputDecoration(
+          isDense: true,
           hintText: 'Search for "Hoodie", "Vibe", "Oversized"...',
           hintStyle: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
@@ -100,7 +102,7 @@ class _HeaderSearchBarState extends State<HeaderSearchBar> {
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         ),
       ),
     );

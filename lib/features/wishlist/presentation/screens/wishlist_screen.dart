@@ -73,24 +73,17 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   }
 
   Widget _buildLoadingGrid(int columns) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: LayoutUtils.getProductGridRatio(context),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-      ),
+    return ProductGridSkeleton(
+      columns: columns,
       itemCount: columns * 2,
-      itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
     );
   }
 
   Widget _buildErrorState(BuildContext context, String error) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -120,24 +113,27 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.favorite_outline, size: 80, color: theme.colorScheme.outlineVariant),
-          const SizedBox(height: 20),
-          const Text('Your wishlist is empty', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Text('Save items you like to see them here.', style: TextStyle(color: theme.colorScheme.secondary)),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: FilledButton(
-              onPressed: () => context.go('/shop'),
-              child: const Text('Explore Products'),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.favorite_outline, size: 80, color: theme.colorScheme.outlineVariant),
+            const SizedBox(height: 20),
+            const Text('Your wishlist is empty', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Text('Save items you like to see them here.', style: TextStyle(color: theme.colorScheme.secondary)),
+            const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: FilledButton(
+                onPressed: () => context.go('/shop'),
+                child: const Text('Explore Products'),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

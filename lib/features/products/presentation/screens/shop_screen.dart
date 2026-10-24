@@ -76,7 +76,7 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
                       itemCount: state.products.length + (state.hasReachedMax ? 0 : 1),
                       itemBuilder: (context, index) {
                         if (index >= state.products.length) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const ProductCardSkeleton();
                         }
                         return ProductCard(product: state.products[index]);
                       },
@@ -87,16 +87,9 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
   }
 
   Widget _buildLoadingGrid(int columns) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: LayoutUtils.getProductGridRatio(context),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-      ),
+    return ProductGridSkeleton(
+      columns: columns,
       itemCount: columns * 2,
-      itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
     );
   }
 

@@ -80,32 +80,37 @@ class AppHeader extends ConsumerWidget {
                 ),
               ),
 
-              AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: headerState.isSearchVisible ? 70 : 0,
-                  child: headerState.isSearchVisible
-                      ? Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: HeaderSearchBar(
-                            initialValue: headerState.searchQuery,
-                            onChanged: (v) {
-                              ref.read(headerProvider.notifier).updateSearchQuery(v);
-                              ref.read(searchProvider.notifier).onQueryChanged(v);
-                            },
-                            onSubmitted: (v) {
-                              ref.read(headerProvider.notifier).updateSearchQuery(v);
-                              ref.read(searchProvider.notifier).submitQuery(v);
-                            },
-                            onClear: () {
-                              ref.read(headerProvider.notifier).updateSearchQuery('');
-                              ref.read(searchProvider.notifier).clearSearch();
-                            },
-                          ),
-                        )
-                      : const SizedBox.shrink(),
+              Flexible(
+                fit: FlexFit.loose,
+                child: ClipRect(
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: headerState.isSearchVisible ? 70 : 0,
+                      child: headerState.isSearchVisible
+                          ? Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: HeaderSearchBar(
+                                initialValue: headerState.searchQuery,
+                                onChanged: (v) {
+                                  ref.read(headerProvider.notifier).updateSearchQuery(v);
+                                  ref.read(searchProvider.notifier).onQueryChanged(v);
+                                },
+                                onSubmitted: (v) {
+                                  ref.read(headerProvider.notifier).updateSearchQuery(v);
+                                  ref.read(searchProvider.notifier).submitQuery(v);
+                                },
+                                onClear: () {
+                                  ref.read(headerProvider.notifier).updateSearchQuery('');
+                                  ref.read(searchProvider.notifier).clearSearch();
+                                },
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
                 ),
               ),
             ],

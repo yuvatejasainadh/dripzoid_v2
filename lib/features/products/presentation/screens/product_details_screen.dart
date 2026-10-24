@@ -11,6 +11,7 @@ import '../../../../shared/widgets/product_card.dart';
 import '../../../../shared/widgets/quantity_selector.dart';
 import '../../../../shared/widgets/review_card.dart';
 import '../../../../shared/widgets/selection_pickers.dart';
+import '../../../../shared/widgets/shimmer_loading.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../cart/data/models/cart_item_model.dart';
 import '../../../cart/presentation/providers/cart_notifier.dart';
@@ -72,17 +73,14 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
     final isDesktop = LayoutUtils.isDesktop(context);
 
     if (state.isLoading) {
-      return Scaffold(
-        appBar: AppBar(leading: const BackButton()),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+      return const ProductDetailsSkeleton();
     }
 
     if (state.errorMessage != null) {
       return Scaffold(
         appBar: AppBar(leading: const BackButton()),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -117,7 +115,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
       return Scaffold(
         appBar: AppBar(leading: const BackButton()),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -381,9 +379,15 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             height: 360,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: state.relatedProducts.length,
+              itemCount: state.relatedProducts.length + (state.isLoadingMoreRelated ? 2 : 0),
               separatorBuilder: (context, index) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
+                if (index >= state.relatedProducts.length) {
+                  return const SizedBox(
+                    width: 180,
+                    child: ProductCardSkeleton(),
+                  );
+                }
                 return SizedBox(
                   width: 180,
                   child: ProductCard(
@@ -394,11 +398,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               },
             ),
           ),
-          if (state.isLoadingMoreRelated)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            ),
         ],
         const SizedBox(height: 120),
       ],
@@ -749,55 +748,57 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
       constraints: const BoxConstraints(maxWidth: LayoutUtils.maxFormWidth),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Rate this Product', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  final ratingValue = index + 1;
-                  return IconButton(
-                    icon: Icon(
-                      ratingValue <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
-                      size: 40,
-                      color: Colors.amber,
-                    ),
-                    onPressed: () => setModalState(() => selectedRating = ratingValue),
-                  );
-                }),
-              ),
-              const SizedBox(height: 20),
-              AppTextField(
-                controller: textController,
-                hintText: 'Share your experience (optional)',
-                maxLines: 4,
-              ),
-              const SizedBox(height: 24),
-              Consumer(
-                builder: (context, modalRef, _) {
-                  final isSubmitting = modalRef.watch(productDetailsProvider(widget.productId)).isSubmittingReview;
-                  return PrimaryButton(
-                    text: 'Submit Review',
-                    loading: isSubmitting,
-                    onPressed: () async {
-                      final success = await modalRef.read(productDetailsProvider(widget.productId).notifier).submitReview(
-                            rating: selectedRating,
-                            text: textController.text.trim(),
-                          );
-                      if (success && context.mounted) {
-                        Navigator.pop(context);
-                        PremiumSnackbar.showSuccess(context, 'Thank you for your review!');
-                      }
-                    },
-                  );
-                },
-              ),
-            ],
+        builder: (context, setModalState) => SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Rate this Product', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    final ratingValue = index + 1;
+                    return IconButton(
+                      icon: Icon(
+                        ratingValue <= selectedRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                        size: 40,
+                        color: Colors.amber,
+                      ),
+                      onPressed: () => setModalState(() => selectedRating = ratingValue),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 20),
+                AppTextField(
+                  controller: textController,
+                  hintText: 'Share your experience (optional)',
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 24),
+                Consumer(
+                  builder: (context, modalRef, _) {
+                    final isSubmitting = modalRef.watch(productDetailsProvider(widget.productId)).isSubmittingReview;
+                    return PrimaryButton(
+                      text: 'Submit Review',
+                      loading: isSubmitting,
+                      onPressed: () async {
+                        final success = await modalRef.read(productDetailsProvider(widget.productId).notifier).submitReview(
+                              rating: selectedRating,
+                              text: textController.text.trim(),
+                            );
+                        if (success && context.mounted) {
+                          Navigator.pop(context);
+                          PremiumSnackbar.showSuccess(context, 'Thank you for your review!');
+                        }
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../core/ui/snackbars/premium_snackbar.dart';
@@ -50,7 +51,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _selectDate(BuildContext context) async {
     if (_isDobLocked) return;
-    
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDob ?? DateTime(2000),
@@ -76,7 +77,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (_nameController.text.trim() != (user.name ?? '')) {
       data['name'] = _nameController.text.trim();
     }
-    
+
     if (_phoneController.text.trim() != (user.phone ?? '')) {
       data['phone'] = _phoneController.text.trim();
       data['mobile'] = _phoneController.text.trim(); // Supporting both naming conventions
@@ -97,7 +98,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
 
     await ref.read(profileProvider.notifier).updateProfile(data);
-    
+
     if (mounted && !ref.read(profileProvider).hasError) {
       PremiumSnackbar.showSuccess(context, 'Profile updated successfully');
       context.pop();
@@ -113,86 +114,88 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       appBar: AppBar(
         title: const Text('Edit Profile'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppTextField(
-                controller: _nameController,
-                hintText: 'Full Name',
-                label: 'Name',
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Name is required';
-                  if (val.trim().length < 2) return 'Name is too short';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              AppTextField(
-                controller: _emailController,
-                hintText: 'Email Address',
-                label: 'Email',
-                enabled: false,
-                readOnly: true,
-              ),
-              const SizedBox(height: 20),
-              AppTextField(
-                controller: _phoneController,
-                hintText: 'Phone Number',
-                label: 'Phone',
-                keyboardType: TextInputType.phone,
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Phone is required';
-                  if (val.trim().length != 10) return 'Enter a valid 10-digit number';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Gender',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+      body: ResponsiveContainer(
+        maxWidth: LayoutUtils.maxFormWidth,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTextField(
+                  controller: _nameController,
+                  hintText: 'Full Name',
+                  label: 'Name',
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Name is required';
+                    if (val.trim().length < 2) return 'Name is too short';
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedGender,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: _isGenderLocked 
-                      ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) 
-                      : theme.colorScheme.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 20),
+                AppTextField(
+                  controller: _emailController,
+                  hintText: 'Email Address',
+                  label: 'Email',
+                  enabled: false,
+                  readOnly: true,
+                ),
+                const SizedBox(height: 20),
+                AppTextField(
+                  controller: _phoneController,
+                  hintText: 'Phone Number',
+                  label: 'Phone',
+                  keyboardType: TextInputType.phone,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Phone is required';
+                    if (val.trim().length != 10) return 'Enter a valid 10-digit number';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Gender',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                items: ['male', 'female', 'other']
-                    .map((g) => DropdownMenuItem(
-                          value: g, 
-                          child: Text(g[0].toUpperCase() + g.substring(1)),
-                        ))
-                    .toList(),
-                onChanged: _isGenderLocked ? null : (val) => setState(() => _selectedGender = val),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Date of Birth',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: () => _selectDate(context),
-                child: InputDecorator(
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedGender,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: _isDobLocked 
-                        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) 
+                    fillColor: _isGenderLocked
+                        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
                         : theme.colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  items: ['male', 'female', 'other']
+                      .map((g) => DropdownMenuItem(
+                            value: g,
+                            child: Text(g[0].toUpperCase() + g.substring(1)),
+                          ))
+                      .toList(),
+                  onChanged: _isGenderLocked ? null : (val) => setState(() => _selectedGender = val),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Date of Birth',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () => _selectDate(context),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: _isDobLocked
+                          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+                          : theme.colorScheme.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -218,6 +221,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

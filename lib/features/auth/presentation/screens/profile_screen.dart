@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -173,24 +174,18 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ]),
 
-              _buildSection(context, 'Support', [
+              _buildSection(context, 'Support & Privacy', [
                 _buildMenuItem(
                   context,
                   icon: Icons.help_outline,
                   title: 'Help & Support',
-                  onTap: () => context.push('/profile/about'),
+                  onTap: () => _showHelpAndSupport(context),
                 ),
                 _buildMenuItem(
                   context,
                   icon: Icons.privacy_tip_outlined,
                   title: 'Privacy Policy',
-                  onTap: () => _launchPrivacyPolicy(context),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.description_outlined,
-                  title: 'Terms & Conditions',
-                  onTap: () {},
+                  onTap: () => context.push('/profile/privacy-policy'),
                 ),
               ]),
 
@@ -319,18 +314,271 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _launchPrivacyPolicy(BuildContext context) async {
-    const url = 'https://dripzoid-frontend.onrender.com/privacy-policy';
+  void _showHelpAndSupport(BuildContext context) {
+    final theme = Theme.of(context);
+    const phoneNumber = '+91 94940 38163';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: LayoutUtils.maxFormWidth),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.65,
+          maxChildSize: 0.85,
+          minChildSize: 0.4,
+          builder: (scrollContext, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Help & Support',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Call Support Card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: theme.colorScheme.outlineVariant),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(Icons.phone_outlined,
+                                  color: theme.colorScheme.onPrimaryContainer, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Customer Care Support',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    phoneNumber,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: () => _launchPhone(context, phoneNumber),
+                          icon: const Icon(Icons.call, size: 18),
+                          label: const Text('Call Support'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Registered Address
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: theme.colorScheme.outlineVariant),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.location_on_outlined,
+                              color: theme.colorScheme.onSurface, size: 22),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Registered Address',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Dripzoid\nNear Cattle Market,\nPithapuram, Andhra Pradesh\nIndia – 533450',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy_outlined, size: 18),
+                          tooltip: 'Copy Address',
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              const ClipboardData(
+                                text:
+                                    'Dripzoid, Near Cattle Market, Pithapuram, Andhra Pradesh, India – 533450',
+                              ),
+                            );
+                            if (context.mounted) {
+                              PremiumSnackbar.showSuccess(
+                                context,
+                                'Address copied to clipboard',
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // FAQs Header
+                  Text(
+                    'Frequently Asked Questions',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildFaqItem(
+                    theme,
+                    q: 'How do I track my order?',
+                    a: 'Visit Profile > Orders in the app. Each confirmed order features real-time shipment milestone updates and delivery estimation.',
+                  ),
+                  _buildFaqItem(
+                    theme,
+                    q: 'What payment methods do you accept?',
+                    a: 'We accept UPI, Credit/Debit cards, NetBanking, digital wallets via Razorpay, and Cash on Delivery (COD).',
+                  ),
+                  _buildFaqItem(
+                    theme,
+                    q: 'How do I care for my Dripzoid garments?',
+                    a: 'Machine wash cold inside out with similar colors. Line dry in shade to maintain color fastness and print longevity.',
+                  ),
+                  _buildFaqItem(
+                    theme,
+                    q: 'Where do you deliver?',
+                    a: 'We ship across India. All orders are packed carefully and delivered directly to your address with trusted courier partners.',
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFaqItem(ThemeData theme, {required String q, required String a}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              q,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              a,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchPhone(BuildContext context, String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$cleanPhone');
     try {
-      final uri = Uri.parse(url);
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(uri);
       if (!launched && context.mounted) {
-        PremiumSnackbar.showError(context, 'Could not open Privacy Policy');
+        PremiumSnackbar.showError(context, 'Could not dial $phone');
       }
     } catch (_) {
       if (context.mounted) {
-        PremiumSnackbar.showError(context, 'Could not open Privacy Policy');
+        PremiumSnackbar.showError(context, 'Could not dial $phone');
       }
     }
   }
+
+  /// Documented web reference for the external policy:
+  /// https://dripzoid-frontend.onrender.com/privacy-policy
+  static const String privacyPolicyWebUrl =
+      'https://dripzoid-frontend.onrender.com/privacy-policy';
 }

@@ -32,7 +32,7 @@ class OrderDetailsScreen extends ConsumerWidget {
                 child: state.isLoading && state.order == null
                     ? _buildLoadingState()
                     : state.errorMessage != null && state.order == null
-                        ? _buildErrorState(state.errorMessage!)
+                        ? _buildErrorState(ref, state.errorMessage!)
                         : _buildContent(context, ref, state),
               ),
             ],
@@ -282,24 +282,13 @@ class OrderDetailsScreen extends ConsumerWidget {
   }
 
   Widget _buildLoadingState() {
-    return const Padding(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          ShimmerWidget.rectangular(height: 160),
-          SizedBox(height: 24),
-          ShimmerWidget.rectangular(height: 120),
-          SizedBox(height: 24),
-          ShimmerWidget.rectangular(height: 100),
-        ],
-      ),
-    );
+    return const OrderDetailsSkeleton();
   }
 
-  Widget _buildErrorState(String message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
+  Widget _buildErrorState(WidgetRef ref, String message) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -311,6 +300,12 @@ class OrderDetailsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => ref.read(orderDetailsProvider(orderId).notifier).loadOrderDetails(),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+            ),
           ],
         ),
       ),

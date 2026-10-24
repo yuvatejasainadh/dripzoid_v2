@@ -50,10 +50,9 @@ class ProductPurchaseBar extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(width: 12),
-          
           // Buy Now
-          if (isAvailable && !isInCart)
+          if (isAvailable && !isInCart) ...[
+            const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: onBuyNow,
@@ -73,6 +72,7 @@ class ProductPurchaseBar extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

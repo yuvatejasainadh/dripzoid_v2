@@ -48,6 +48,8 @@ class ProfileQuickActionCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -55,6 +57,8 @@ class ProfileQuickActionCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.5),
                   ),

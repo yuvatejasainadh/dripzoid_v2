@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/ui/snackbars/premium_snackbar.dart';
+import '../../../../core/utils/layout_utils.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/password_field.dart';
 import '../providers/profile_notifier.dart';
@@ -55,54 +56,57 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       appBar: AppBar(
         title: const Text('Security'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Change Password',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Ensure your account is using a long, random password to stay secure.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 32),
-              PasswordField(
-                controller: _currentController,
-                hintText: 'Current Password',
-                label: 'Current Password',
-                validator: (val) => val == null || val.isEmpty ? 'Current password is required' : null,
-              ),
-              const SizedBox(height: 20),
-              PasswordField(
-                controller: _newController,
-                hintText: 'New Password',
-                label: 'New Password',
-                validator: (val) {
-                  if (val == null || val.isEmpty) return 'New password is required';
-                  if (val.length < 6) return 'Password must be at least 6 characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              PasswordField(
-                controller: _confirmController,
-                hintText: 'Confirm New Password',
-                label: 'Confirm New Password',
-                validator: (val) => val == null || val.isEmpty ? 'Please confirm your password' : null,
-              ),
-              const SizedBox(height: 40),
-              PrimaryButton(
-                onPressed: _changePassword,
-                loading: profileState.isLoading,
-                text: 'Update Password',
-              ),
-            ],
+      body: ResponsiveContainer(
+        maxWidth: LayoutUtils.maxFormWidth,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Change Password',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Ensure your account is using a long, random password to stay secure.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 32),
+                PasswordField(
+                  controller: _currentController,
+                  hintText: 'Current Password',
+                  label: 'Current Password',
+                  validator: (val) => val == null || val.isEmpty ? 'Current password is required' : null,
+                ),
+                const SizedBox(height: 20),
+                PasswordField(
+                  controller: _newController,
+                  hintText: 'New Password',
+                  label: 'New Password',
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'New password is required';
+                    if (val.length < 6) return 'Password must be at least 6 characters';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                PasswordField(
+                  controller: _confirmController,
+                  hintText: 'Confirm New Password',
+                  label: 'Confirm New Password',
+                  validator: (val) => val == null || val.isEmpty ? 'Please confirm your password' : null,
+                ),
+                const SizedBox(height: 40),
+                PrimaryButton(
+                  onPressed: _changePassword,
+                  loading: profileState.isLoading,
+                  text: 'Update Password',
+                ),
+              ],
+            ),
           ),
         ),
       ),

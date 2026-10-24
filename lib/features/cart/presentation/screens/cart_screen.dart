@@ -122,27 +122,27 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  flex: 7,
-                                  child: RefreshIndicator(
-                                    onRefresh: () => ref.read(cartProvider.notifier).fetchCart(),
-                                    child: ListView.separated(
-                                      itemCount: state.items.length,
-                                      separatorBuilder: (context, index) => const SizedBox(height: 16),
-                                      itemBuilder: (context, index) {
-                                        final item = state.items[index];
-                                        return CartItemTile(
-                                          item: item,
-                                          onTap: item.productId.isNotEmpty
-                                              ? () => context.push('/product/${item.productId}')
-                                              : null,
-                                          onQuantityChanged: (q) =>
-                                              ref.read(cartProvider.notifier).updateQuantity(item.id, q),
-                                          onRemove: () => _confirmRemoveItem(context, item),
-                                        );
-                                      },
+                                    flex: 7,
+                                    child: RefreshIndicator(
+                                      onRefresh: () => ref.read(cartProvider.notifier).fetchCart(),
+                                      child: ListView.separated(
+                                        itemCount: state.items.length,
+                                        separatorBuilder: (context, index) => const SizedBox(height: 16),
+                                        itemBuilder: (context, index) {
+                                          final item = state.items[index];
+                                          return CartItemTile(
+                                            item: item,
+                                            onTap: item.productId.isNotEmpty
+                                                ? () => context.push('/product/${item.productId}')
+                                                : null,
+                                            onQuantityChanged: (q) =>
+                                                ref.read(cartProvider.notifier).updateQuantity(item.id, q),
+                                            onRemove: () => _confirmRemoveItem(context, item),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
                                 const SizedBox(width: 32),
                                 Expanded(
                                   flex: 5,
@@ -183,8 +183,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 
   Widget _buildErrorState(BuildContext context, String message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -217,8 +217,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
