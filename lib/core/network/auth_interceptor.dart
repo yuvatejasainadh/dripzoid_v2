@@ -9,8 +9,10 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    options.extra['withCredentials'] = true;
+
     final token = await _tokenStorage.getToken();
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
       AppLogger.d('[AuthInterceptor] Attached Bearer token to request: ${options.uri.path}');
     }
@@ -22,14 +24,16 @@ class AuthInterceptor extends Interceptor {
     // 1. Check for token in response body (primary for mobile and web)
     final data = response.data;
     if (data is Map<String, dynamic>) {
-      final bodyToken = data['token'] ?? data['accessToken'];
+      final bodyToken = data['token'] ??
+          data['accessToken'] ??
+          (data['data'] is Map ? (data['data']['token'] ?? data['data']['accessToken']) : null);
       if (bodyToken != null && bodyToken is String && bodyToken.isNotEmpty) {
         await _tokenStorage.saveToken(bodyToken);
         AppLogger.i('[AuthInterceptor] Token extracted from body and persisted');
       }
     }
 
-    // 2. Check for Set-Cookie header to extract token (fallback/redundancy)
+    // 2. Check for Set-Cookie header to extract token (fallback/redundancy for non-web)
     final cookies = response.headers['set-cookie'];
     if (cookies != null && cookies.isNotEmpty) {
       for (var cookie in cookies) {
@@ -53,7 +57,6 @@ class AuthInterceptor extends Interceptor {
     if (err.response?.statusCode == 401) {
       AppLogger.w('[AuthInterceptor] 401 Unauthorized detected, clearing token');
       await _tokenStorage.clearToken();
-      // Note: Notifier will handle the state transition based on the next checkSession or API failure
     }
     super.onError(err, handler);
   }

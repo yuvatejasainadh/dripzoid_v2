@@ -36,6 +36,9 @@ class NetworkInitializer {
         headers: const {
           'accept': 'application/json',
         },
+        extra: const {
+          'withCredentials': true,
+        },
       ),
     );
 
@@ -70,6 +73,9 @@ class NetworkInitializer {
         contentType: Headers.jsonContentType,
         headers: const {
           'accept': 'application/json',
+        },
+        extra: const {
+          'withCredentials': true,
         },
       ),
     );

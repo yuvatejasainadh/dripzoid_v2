@@ -149,6 +149,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
       return switch (result) {
         Success(data: final response) => () {
+            if (response.token != null && response.token!.isNotEmpty) {
+              ref.read(tokenStorageProvider).saveToken(response.token!);
+            }
             ref.read(cartProvider.notifier).fetchCart();
             state = state.copyWith(
               status: AuthStatus.authenticated,
@@ -207,6 +210,10 @@ class AuthNotifier extends Notifier<AuthState> {
         return false; // User cancelled
       }
 
+      final rawToken = response['token'] ?? response['accessToken'] ?? (response['data'] is Map ? (response['data']['token'] ?? response['data']['accessToken']) : null);
+      if (rawToken != null && rawToken is String && rawToken.isNotEmpty) {
+        await ref.read(tokenStorageProvider).saveToken(rawToken);
+      }
       final rawUser = response['user'] ?? (response['data'] is Map ? (response['data']['user'] ?? response['data']) : null) ?? response;
       final user = UserModel.fromJson(rawUser is Map<String, dynamic> ? rawUser : Map<String, dynamic>.from(rawUser as Map));
       ref.read(cartProvider.notifier).fetchCart();
@@ -234,6 +241,13 @@ class AuthNotifier extends Notifier<AuthState> {
       final result = await _repository.register(data);
 
       if (result is Success) {
+        final resData = result.data;
+        if (resData is Map) {
+          final token = resData['token'] ?? resData['accessToken'];
+          if (token != null && token is String && token.isNotEmpty) {
+            await ref.read(tokenStorageProvider).saveToken(token);
+          }
+        }
         await checkSession();
         return state.status == AuthStatus.authenticated;
       } else {

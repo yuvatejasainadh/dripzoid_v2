@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/result.dart';
+import '../../../../core/network/token_storage.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../checkout/presentation/providers/checkout_notifier.dart';
 import '../../data/models/order_model.dart';
 import '../../data/repositories/order_repository.dart';
@@ -33,10 +35,10 @@ class OrderHistoryState {
 
   List<OrderModel> get filteredOrders {
     if (selectedFilter == 'All') return orders;
-    
+
     return orders.where((order) {
       final status = order.status.toLowerCase();
-      
+
       if (selectedFilter == 'Active') {
         return status != 'cancelled' && status != 'delivered' && status != 'returned';
       }
@@ -51,9 +53,9 @@ class OrderHistoryState {
   }
 
   int get totalCount => orders.length;
-  int get activeCount => orders.where((o) => 
-    o.status.toLowerCase() != 'cancelled' && 
-    o.status.toLowerCase() != 'delivered' && 
+  int get activeCount => orders.where((o) =>
+    o.status.toLowerCase() != 'cancelled' &&
+    o.status.toLowerCase() != 'delivered' &&
     o.status.toLowerCase() != 'returned').length;
   int get cancelledCount => orders.where((o) => o.status.toLowerCase() == 'cancelled').length;
 }
@@ -73,6 +75,22 @@ class OrderHistoryNotifier extends Notifier<OrderHistoryState> {
   Future<void> fetchOrders() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
+      // 1. If auth state is still initial, wait for session check before querying protected endpoints
+      final authState = ref.read(authProvider);
+      if (authState.status == AuthStatus.initial) {
+        await ref.read(authProvider.notifier).checkSession();
+      }
+
+      // 2. Validate token presence before issuing network request
+      final token = await ref.read(tokenStorageProvider).getToken();
+      if (token == null || ref.read(authProvider).status == AuthStatus.unauthenticated) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Please sign in to view your orders',
+        );
+        return;
+      }
+
       final result = await _repository.getUserOrders();
 
       state = switch (result) {

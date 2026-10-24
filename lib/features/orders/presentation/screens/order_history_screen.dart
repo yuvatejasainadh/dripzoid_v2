@@ -7,6 +7,7 @@ import '../providers/order_history_notifier.dart';
 import '../widgets/order_filter_chips.dart';
 import '../widgets/order_history_card.dart';
 import '../widgets/order_summary_widget.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -157,8 +158,21 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
               SizedBox(
                 width: 200,
                 child: ElevatedButton(
-                  onPressed: () => ref.read(orderHistoryProvider.notifier).fetchOrders(),
-                  child: const Text('Try Again'),
+                  onPressed: () {
+                    final isUnauth = ref.read(authProvider).status == AuthStatus.unauthenticated ||
+                        message.toLowerCase().contains('sign in');
+                    if (isUnauth) {
+                      context.push('/login');
+                    } else {
+                      ref.read(orderHistoryProvider.notifier).fetchOrders();
+                    }
+                  },
+                  child: Text(
+                    ref.read(authProvider).status == AuthStatus.unauthenticated ||
+                            message.toLowerCase().contains('sign in')
+                        ? 'Sign In'
+                        : 'Try Again',
+                  ),
                 ),
               ),
             ],
